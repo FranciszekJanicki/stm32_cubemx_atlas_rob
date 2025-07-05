@@ -1,0 +1,6 @@
+add_subdirectory(common)
+add_subdirectory(system_task)
+add_subdirectory(joints_task)
+add_subdirectory(kinematics_task)
+add_subdirectory(uart_task)
+add_subdirectory(packet_task)

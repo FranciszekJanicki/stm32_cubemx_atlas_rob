@@ -1,0 +1,8 @@
+git@github.com:FranciszekJanicki/a4988.git a4988
+git@github.com:FranciszekJanicki/as5600.git as5600
+git@github.com:FranciszekJanicki/ina226.git ina226
+git@github.com:FranciszekJanicki/step_motor.git step_motor
+git@github.com:FranciszekJanicki/pid_regulator.git pid_regulator
+git@github.com:FranciszekJanicki/motor_driver.git motor_driver
+git@github.com:FranciszekJanicki/handle_manager.git handle_manager
+git@github.com:FranciszekJanicki/atlas_core.git atlas_core
