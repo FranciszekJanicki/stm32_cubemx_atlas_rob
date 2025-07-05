@@ -17,8 +17,9 @@ function remove_component {
 
     echo "Removing component $COMP_NAME"
     git submodule deinit -f "$COMP_PATH"
-    git rm -f "$COMP_PATH"
+    git rm -rf "$COMP_PATH"
     rm -rf ".git/modules/$COMP_PATH"
+    rm -rf "$COMP_PATH"
     echo "Done."
 }
 
