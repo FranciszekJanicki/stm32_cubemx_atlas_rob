@@ -4,7 +4,7 @@
 #include "common.h"
 #include "joint_manager.h"
 
-#define JOINT_TASK_STACK_DEPTH (2000U / sizeof(StackType_t))
+#define JOINT_TASK_STACK_DEPTH (3000U / sizeof(StackType_t))
 #define JOINT_TASK_PRIORITY (1U)
 
 #define JOINT_QUEUE_ITEMS (10U)

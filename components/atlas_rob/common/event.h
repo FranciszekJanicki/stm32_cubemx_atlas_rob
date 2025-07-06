@@ -26,17 +26,25 @@ typedef struct {
 
 typedef struct {
     atlas_joints_path_t path;
-} system_event_payload_atlas_joints_path_t;
+} system_event_payload_joints_path_t;
 
 typedef struct {
     atlas_cartesian_path_t path;
-} system_event_payload_atlas_cartesian_path_t;
+} system_event_payload_cartesian_path_t;
+
+typedef struct {
+} system_event_payload_start_path_t;
+
+typedef struct {
+} system_event_payload_stop_path_t;
 
 typedef union {
     system_event_payload_joints_t joints;
     system_event_payload_cartesian_t cartesian;
-    system_event_payload_atlas_joints_path_t joints_path;
-    system_event_payload_atlas_cartesian_path_t cartesian_path;
+    system_event_payload_joints_path_t joints_path;
+    system_event_payload_cartesian_path_t cartesian_path;
+    system_event_payload_start_path_t start_path;
+    system_event_payload_stop_path_t stop_path;
 } system_event_payload_t;
 
 typedef struct {

@@ -12,8 +12,10 @@
 
 typedef struct {
     bool is_running;
+    bool is_path_running;
 
     atlas_joints_path_t joints_path;
+    size_t joints_path_index;
 } system_manager_t;
 
 atlas_err_t system_manager_initialize(system_manager_t* manager);
