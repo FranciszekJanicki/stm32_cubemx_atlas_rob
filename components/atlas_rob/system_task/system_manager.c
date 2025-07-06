@@ -142,7 +142,7 @@ static atlas_err_t system_manager_event_joints_measurement_handler(
     }
 
     if (manager->is_path_running && system_manager_has_reached_path_point(manager, &joints->data)) {
-        if (manager->joints_path_index + 1U == ATLAS_PATH_MAX_POINTS) {
+        if (manager->joints_path_index + 1U == manager->joints_path.points_num) {
             manager->is_path_running = false;
             manager->joints_path_index = 0U;
         } else {

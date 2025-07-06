@@ -70,9 +70,9 @@ static atlas_cartesian_path_t kinematics_manager_joints_to_cartesian_path(
 {
     ATLAS_ASSERT(joints_path);
 
-    atlas_cartesian_path_t cartesian_path;
+    atlas_cartesian_path_t cartesian_path = {.points_num = joints_path->points_num};
 
-    for (uint8_t point = 0U; point < ATLAS_PATH_MAX_POINTS; ++point) {
+    for (uint8_t point = 0U; point < cartesian_path.points_num; ++point) {
         cartesian_path.points[point] =
             kinematics_manager_joints_to_cartesian_data(&joints_path->points[point]);
     }
@@ -85,9 +85,9 @@ static atlas_joints_path_t kinematics_manager_cartesian_to_joints_path(
 {
     ATLAS_ASSERT(cartesian_path);
 
-    atlas_joints_path_t joints_path;
+    atlas_joints_path_t joints_path = {.points_num = cartesian_path->points_num};
 
-    for (uint8_t point = 0U; point < ATLAS_PATH_MAX_POINTS; ++point) {
+    for (uint8_t point = 0U; point < joints_path.points_num; ++point) {
         joints_path.points[point] =
             kinematics_manager_cartesian_to_joints_data(&cartesian_path->points[point]);
     }
