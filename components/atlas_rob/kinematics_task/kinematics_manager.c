@@ -70,9 +70,9 @@ static atlas_cartesian_path_t kinematics_manager_joints_to_cartesian_path(
 {
     ATLAS_ASSERT(joints_path);
 
-    atlas_cartesian_path_t cartesian_path = {.points_num = joints_path->points_num};
+    atlas_cartesian_path_t cartesian_path = {};
 
-    for (uint8_t point = 0U; point < cartesian_path.points_num; ++point) {
+    for (uint8_t point = 0U; point < ATLAS_JOINTS_PATH_MAX_POINTS; ++point) {
         cartesian_path.points[point] =
             kinematics_manager_joints_to_cartesian_data(&joints_path->points[point]);
     }
@@ -85,9 +85,9 @@ static atlas_joints_path_t kinematics_manager_cartesian_to_joints_path(
 {
     ATLAS_ASSERT(cartesian_path);
 
-    atlas_joints_path_t joints_path = {.points_num = cartesian_path->points_num};
+    atlas_joints_path_t joints_path = {};
 
-    for (uint8_t point = 0U; point < joints_path.points_num; ++point) {
+    for (uint8_t point = 0U; point < ATLAS_CARTESIAN_PATH_MAX_POINTS; ++point) {
         joints_path.points[point] =
             kinematics_manager_cartesian_to_joints_data(&cartesian_path->points[point]);
     }
@@ -131,22 +131,23 @@ static atlas_err_t kinematics_manager_event_stop_handler(
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t kinematics_manager_event_direct_handler(
+static atlas_err_t kinematics_manager_event_joints_data_handler(
     kinematics_manager_t* manager,
-    kinematics_event_payload_direct_t const* direct)
+    kinematics_event_payload_joints_data_t const* joints_data)
 {
-    ATLAS_ASSERT(manager && direct);
+    ATLAS_ASSERT(manager && joints_data);
     ATLAS_LOG_FUNC(TAG);
 
     if (!manager->is_running) {
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    system_event_t event = {.origin = SYSTEM_EVENT_ORIGIN_KINEMATICS,
-                            .type = SYSTEM_EVENT_TYPE_CARTESIAN};
-    event.payload.cartesian.data = kinematics_manager_joints_to_cartesian_data(&direct->data);
+    system_event_t event = {.type = SYSTEM_EVENT_TYPE_MEAS_DATA};
+    event.payload.meas_data.type = ATLAS_PATH_TYPE_CARTESIAN;
+    event.payload.meas_data.payload.cartesian =
+        kinematics_manager_joints_to_cartesian_data(joints_data);
 
-    atlas_print_cartesian_data(&event.payload.cartesian.data);
+    atlas_print_cartesian_data(&event.payload.meas_data.payload.cartesian);
 
     if (!kinematics_manager_send_system_event(&event)) {
         return ATLAS_ERR_FAIL;
@@ -155,22 +156,22 @@ static atlas_err_t kinematics_manager_event_direct_handler(
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t kinematics_manager_event_inverse_handler(
+static atlas_err_t kinematics_manager_event_cartesian_data_handler(
     kinematics_manager_t* manager,
-    kinematics_event_payload_inverse_t const* inverse)
+    kinematics_event_payload_cartesian_data_t const* cartesian_data)
 {
-    ATLAS_ASSERT(manager && inverse);
+    ATLAS_ASSERT(manager && cartesian_data);
     ATLAS_LOG_FUNC(TAG);
 
     if (!manager->is_running) {
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    system_event_t event = {.origin = SYSTEM_EVENT_ORIGIN_KINEMATICS,
-                            .type = SYSTEM_EVENT_TYPE_JOINTS};
-    event.payload.joints.data = kinematics_manager_cartesian_to_joints_data(&inverse->data);
+    system_event_t event = {.type = SYSTEM_EVENT_TYPE_JOG_DATA};
+    event.payload.jog_data.payload.joints =
+        kinematics_manager_cartesian_to_joints_data(cartesian_data);
 
-    atlas_print_joints_data(&event.payload.joints.data);
+    atlas_print_joints_data(&event.payload.jog_data.payload.joints);
 
     if (!kinematics_manager_send_system_event(&event)) {
         return ATLAS_ERR_FAIL;
@@ -179,21 +180,22 @@ static atlas_err_t kinematics_manager_event_inverse_handler(
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t kinematics_manager_event_direct_path_handler(
+static atlas_err_t kinematics_manager_event_joints_path_handler(
     kinematics_manager_t* manager,
-    kinematics_event_payload_direct_path_t const* direct_path)
+    kinematics_event_payload_joints_path_t const* joints_path)
 {
-    ATLAS_ASSERT(manager && direct_path);
+    ATLAS_ASSERT(manager && joints_path);
     ATLAS_LOG_FUNC(TAG);
 
     if (!manager->is_running) {
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    system_event_t event = {.origin = SYSTEM_EVENT_ORIGIN_KINEMATICS,
-                            .type = SYSTEM_EVENT_TYPE_CARTESIAN_PATH};
+    system_event_t event = {.type = SYSTEM_EVENT_TYPE_PATH_DATA};
+    event.payload.path_data.type = ATLAS_PATH_TYPE_CARTESIAN;
+    // event.payload.path_data.payload.cartesian;
 
-    atlas_print_cartesian_path(&event.payload.cartesian_path.path);
+    atlas_print_cartesian_path(&event.payload.path_data.payload.cartesian);
 
     if (!kinematics_manager_send_system_event(&event)) {
         return ATLAS_ERR_FAIL;
@@ -202,21 +204,23 @@ static atlas_err_t kinematics_manager_event_direct_path_handler(
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t kinematics_manager_event_inverse_path_handler(
+static atlas_err_t kinematics_manager_event_cartesian_path_handler(
     kinematics_manager_t* manager,
-    kinematics_event_payload_inverse_path_t const* inverse_path)
+    kinematics_event_payload_cartesian_path_t const* cartesian_path)
 {
-    ATLAS_ASSERT(manager && inverse_path);
+    ATLAS_ASSERT(manager && cartesian_path);
     ATLAS_LOG_FUNC(TAG);
 
     if (!manager->is_running) {
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    system_event_t event = {.origin = SYSTEM_EVENT_ORIGIN_KINEMATICS,
-                            .type = SYSTEM_EVENT_TYPE_JOINTS_PATH};
+    system_event_t event = {.type = SYSTEM_EVENT_TYPE_PATH_DATA};
+    event.payload.path_data.type = ATLAS_PATH_TYPE_JOINTS;
+    event.payload.path_data.payload.joints =
+        kinematics_manager_cartesian_to_joints_path(cartesian_path);
 
-    atlas_print_joints_path(&event.payload.joints_path.path);
+    atlas_print_joints_path(&event.payload.path_data.payload.joints);
 
     if (!kinematics_manager_send_system_event(&event)) {
         return ATLAS_ERR_FAIL;
@@ -239,22 +243,31 @@ static atlas_err_t kinematics_manager_event_handler(kinematics_manager_t* manage
     ATLAS_ASSERT(manager && event);
 
     switch (event->type) {
-        case KINEMATICS_EVENT_TYPE_START:
+        case KINEMATICS_EVENT_TYPE_START: {
             return kinematics_manager_event_start_handler(manager, &event->payload.start);
-        case KINEMATICS_EVENT_TYPE_STOP:
+        }
+        case KINEMATICS_EVENT_TYPE_STOP: {
             return kinematics_manager_event_stop_handler(manager, &event->payload.stop);
-        case KINEMATICS_EVENT_TYPE_DIRECT:
-            return kinematics_manager_event_direct_handler(manager, &event->payload.direct);
-        case KINEMATICS_EVENT_TYPE_INVERSE:
-            return kinematics_manager_event_inverse_handler(manager, &event->payload.inverse);
-        case KINEMATICS_EVENT_TYPE_DIRECT_PATH:
-            return kinematics_manager_event_direct_path_handler(manager,
-                                                                &event->payload.direct_path);
-        case KINEMATICS_EVENT_TYPE_INVERSE_PATH:
-            return kinematics_manager_event_inverse_path_handler(manager,
-                                                                 &event->payload.inverse_path);
-        default:
+        }
+        case KINEMATICS_EVENT_TYPE_JOINTS_DATA: {
+            return kinematics_manager_event_joints_data_handler(manager,
+                                                                &event->payload.joints_data);
+        }
+        case KINEMATICS_EVENT_TYPE_CARTESIAN_DATA: {
+            return kinematics_manager_event_cartesian_data_handler(manager,
+                                                                   &event->payload.cartesian_data);
+        }
+        case KINEMATICS_EVENT_TYPE_JOINTS_PATH: {
+            return kinematics_manager_event_joints_path_handler(manager,
+                                                                &event->payload.joints_path);
+        }
+        case KINEMATICS_EVENT_TYPE_CARTESIAN_PATH: {
+            return kinematics_manager_event_cartesian_path_handler(manager,
+                                                                   &event->payload.cartesian_path);
+        }
+        default: {
             return ATLAS_ERR_UNKNOWN_EVENT;
+        }
     }
 }
 

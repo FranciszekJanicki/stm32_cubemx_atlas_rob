@@ -178,18 +178,19 @@ static atlas_err_t packet_manager_event_stop_handler(packet_manager_t* manager,
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t packet_manager_event_joints_handler(packet_manager_t* manager,
-                                                       packet_event_payload_joints_t const* joints)
+static atlas_err_t packet_manager_event_meas_data_handler(
+    packet_manager_t* manager,
+    packet_event_payload_meas_data_t const* meas_data)
 {
-    ATLAS_ASSERT(manager && joints);
+    ATLAS_ASSERT(manager && meas_data);
     ATLAS_LOG_FUNC(TAG);
 
     if (!manager->is_running) {
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    atlas_packet_t packet = {.type = ATLAS_PACKET_TYPE_JOINTS};
-    packet.payload.joints.data = joints->data;
+    atlas_hmi_packet_t packet = {.type = ATLAS_HMI_PACKET_TYPE_MEAS_DATA};
+    packet.payload.meas_data = *meas_data;
 
     ATLAS_RET_ON_ERR(packet_manager_send_packet(manager, &packet));
 
@@ -225,8 +226,8 @@ static atlas_err_t packet_manager_event_handler(packet_manager_t* manager,
             return packet_manager_event_start_handler(manager, &event->payload.start);
         case PACKET_EVENT_TYPE_STOP:
             return packet_manager_event_stop_handler(manager, &event->payload.stop);
-        case PACKET_EVENT_TYPE_JOINTS:
-            return packet_manager_event_joints_handler(manager, &event->payload.joints);
+        case PACKET_EVENT_TYPE_MEAS_DATA:
+            return packet_manager_event_meas_data_handler(manager, &event->payload.meas_data);
         default:
             return ATLAS_ERR_UNKNOWN_EVENT;
     }

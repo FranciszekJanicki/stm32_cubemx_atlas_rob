@@ -10,7 +10,6 @@ target_include_directories(system_task PUBLIC
 )
 
 target_link_libraries(system_task PUBLIC
-    joint_task
     common
     stm32cubemx
 )

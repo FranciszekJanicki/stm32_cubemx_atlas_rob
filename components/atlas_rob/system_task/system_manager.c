@@ -115,7 +115,7 @@ static inline bool system_manager_has_reached_path_point(system_manager_t const*
 
     for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
         if (data->positions[num] !=
-            manager->joints_path.points[manager->joints_path_index].positions[num]) {
+            manager->status.joints_path.points[manager->status.path_index].positions[num]) {
             return false;
         }
     }
@@ -123,122 +123,75 @@ static inline bool system_manager_has_reached_path_point(system_manager_t const*
     return true;
 }
 
-static atlas_err_t system_manager_event_joints_measurement_handler(
+static atlas_err_t system_manager_event_meas_data_handler(
     system_manager_t* manager,
-    system_event_payload_joints_t const* joints)
+    system_event_payload_meas_data_t const* meas_data)
 {
-    ATLAS_ASSERT(manager && joints);
+    ATLAS_ASSERT(manager && meas_data);
     ATLAS_LOG_FUNC(TAG);
 
-    if (!manager->is_running) {
-        return ATLAS_ERR_NOT_RUNNING;
-    }
+    packet_event_t event = {.type = PACKET_EVENT_TYPE_MEAS_DATA};
+    event.payload.meas_data = *meas_data;
 
-    kinematics_event_t event = {.type = KINEMATICS_EVENT_TYPE_DIRECT};
-    event.payload.direct.data = joints->data;
-
-    if (!system_manager_send_kinematics_event(&event)) {
+    if (!system_manager_send_packet_event(&event)) {
         return ATLAS_ERR_FAIL;
     }
 
-    if (manager->is_path_running && system_manager_has_reached_path_point(manager, &joints->data)) {
-        if (manager->joints_path_index + 1U == manager->joints_path.points_num) {
-            manager->is_path_running = false;
-            manager->joints_path_index = 0U;
+    if (manager->status.state == ATLAS_STATE_PATH &&
+        system_manager_has_reached_path_point(manager, &meas_data->payload.joints)) {
+        if (manager->status.path_index + 1U == ATLAS_JOINTS_PATH_MAX_POINTS) {
+            manager->status.state = ATLAS_STATE_IDLE;
+            manager->status.path_index = 0U;
         } else {
-            ++manager->joints_path_index;
+            ++manager->status.path_index;
         }
     }
 
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t system_manager_event_joints_reference_handler(
+static atlas_err_t system_manager_event_jog_data_handler(
     system_manager_t* manager,
-    system_event_payload_joints_t const* joints)
+    system_event_payload_jog_data_t const* jog_data)
 {
-    ATLAS_ASSERT(manager && joints);
+    ATLAS_ASSERT(manager && jog_data);
     ATLAS_LOG_FUNC(TAG);
 
-    if (!manager->is_running) {
-        return ATLAS_ERR_NOT_RUNNING;
-    }
+    if (jog_data->type == ATLAS_DATA_TYPE_CARTESIAN) {
+        kinematics_event_t event = {.type = KINEMATICS_EVENT_TYPE_CARTESIAN_DATA};
+        event.payload.cartesian_data = jog_data->payload.cartesian;
 
-    joints_event_t event = {.type = JOINTS_EVENT_TYPE_JOINTS};
-    event.payload.joints.data = joints->data;
+        if (!system_manager_send_kinematics_event(&event)) {
+            return ATLAS_ERR_FAIL;
+        }
+    } else {
+        joints_event_t event = {.type = JOINTS_EVENT_TYPE_REF_DATA};
+        event.payload.ref_data = jog_data->payload.joints;
 
-    if (!system_manager_send_joints_event(&event)) {
-        return ATLAS_ERR_FAIL;
-    }
-
-    return ATLAS_ERR_OK;
-}
-
-static atlas_err_t system_manager_event_cartesian_calculated_handler(
-    system_manager_t* manager,
-    system_event_payload_cartesian_t const* cartesian)
-{
-    ATLAS_ASSERT(manager && cartesian);
-    ATLAS_LOG_FUNC(TAG);
-
-    packet_event_t event = {.type = PACKET_EVENT_TYPE_CARTESIAN};
-    event.payload.cartesian.data = cartesian->data;
-
-    if (!system_manager_send_packet_event(&event)) {
-        return ATLAS_ERR_FAIL;
+        if (!system_manager_send_joints_event(&event)) {
+            return ATLAS_ERR_FAIL;
+        }
     }
 
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t system_manager_event_cartesian_reference_handler(
+static atlas_err_t system_manager_event_path_data_handler(
     system_manager_t* manager,
-    system_event_payload_cartesian_t const* cartesian)
+    system_event_payload_path_data_t const* path_data)
 {
-    ATLAS_ASSERT(manager && cartesian);
+    ATLAS_ASSERT(manager && path_data);
     ATLAS_LOG_FUNC(TAG);
 
-    kinematics_event_t event = {.type = KINEMATICS_EVENT_TYPE_INVERSE};
-    event.payload.inverse.data = cartesian->data;
+    if (path_data->type == ATLAS_PATH_TYPE_CARTESIAN) {
+        kinematics_event_t event = {.type = KINEMATICS_EVENT_TYPE_CARTESIAN_PATH};
+        event.payload.cartesian_path = path_data->payload.cartesian;
 
-    if (!system_manager_send_kinematics_event(&event)) {
-        return ATLAS_ERR_FAIL;
-    }
-
-    return ATLAS_ERR_OK;
-}
-
-static atlas_err_t system_manager_event_joints_path_handler(
-    system_manager_t* manager,
-    system_event_payload_joints_path_t const* joints_path)
-{
-    ATLAS_ASSERT(manager && joints_path);
-    ATLAS_LOG_FUNC(TAG);
-
-    manager->joints_path = joints_path->path;
-
-    kinematics_event_t event = {.type = KINEMATICS_EVENT_TYPE_DIRECT_PATH};
-    event.payload.direct_path.path = joints_path->path;
-
-    if (!system_manager_send_kinematics_event(&event)) {
-        return ATLAS_ERR_FAIL;
-    }
-
-    return ATLAS_ERR_OK;
-}
-
-static atlas_err_t system_manager_event_cartesian_path_handler(
-    system_manager_t* manager,
-    system_event_payload_cartesian_path_t const* cartesian_path)
-{
-    ATLAS_ASSERT(manager && cartesian_path);
-    ATLAS_LOG_FUNC(TAG);
-
-    kinematics_event_t event = {.type = KINEMATICS_EVENT_TYPE_INVERSE_PATH};
-    event.payload.inverse_path.path = cartesian_path->path;
-
-    if (!system_manager_send_kinematics_event(&event)) {
-        return ATLAS_ERR_FAIL;
+        if (!system_manager_send_kinematics_event(&event)) {
+            return ATLAS_ERR_FAIL;
+        }
+    } else {
+        manager->status.joints_path = path_data->payload.joints;
     }
 
     return ATLAS_ERR_OK;
@@ -255,14 +208,6 @@ static atlas_err_t system_manager_event_start_path_handler(
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    if (manager->is_path_running) {
-        ATLAS_LOG(TAG, "path already running!");
-        return ATLAS_ERR_FAIL;
-    }
-
-    manager->is_path_running = true;
-    manager->joints_path_index = 0U;
-
     return ATLAS_ERR_OK;
 }
 
@@ -277,13 +222,33 @@ static atlas_err_t system_manager_event_stop_path_handler(
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    if (!manager->is_path_running) {
-        ATLAS_LOG(TAG, "path not running!");
-        return ATLAS_ERR_FAIL;
+    return ATLAS_ERR_OK;
+}
+
+static atlas_err_t system_manager_event_start_jog_handler(
+    system_manager_t* manager,
+    system_event_payload_start_jog_t const* start_jog)
+{
+    ATLAS_ASSERT(manager && start_jog);
+    ATLAS_LOG_FUNC(TAG);
+
+    if (!manager->is_running) {
+        return ATLAS_ERR_NOT_RUNNING;
     }
 
-    manager->is_path_running = false;
-    manager->joints_path_index = 0U;
+    return ATLAS_ERR_OK;
+}
+
+static atlas_err_t system_manager_event_stop_jog_handler(
+    system_manager_t* manager,
+    system_event_payload_stop_jog_t const* stop_jog)
+{
+    ATLAS_ASSERT(manager && stop_jog);
+    ATLAS_LOG_FUNC(TAG);
+
+    if (!manager->is_running) {
+        return ATLAS_ERR_NOT_RUNNING;
+    }
 
     return ATLAS_ERR_OK;
 }
@@ -294,28 +259,14 @@ static atlas_err_t system_manager_event_handler(system_manager_t* manager,
     ATLAS_ASSERT(manager && event);
 
     switch (event->type) {
-        case SYSTEM_EVENT_TYPE_JOINTS: {
-            return (event->origin == SYSTEM_EVENT_ORIGIN_JOINTS)
-                       ? system_manager_event_joints_measurement_handler(manager,
-                                                                         &event->payload.joints)
-                       : system_manager_event_joints_reference_handler(manager,
-                                                                       &event->payload.joints);
+        case SYSTEM_EVENT_TYPE_MEAS_DATA: {
+            system_manager_event_meas_data_handler(manager, &event->payload.meas_data);
         }
-        case SYSTEM_EVENT_TYPE_CARTESIAN: {
-            return (event->origin == SYSTEM_EVENT_ORIGIN_KINEMATICS)
-                       ? system_manager_event_cartesian_calculated_handler(
-                             manager,
-                             &event->payload.cartesian)
-                       : system_manager_event_cartesian_reference_handler(
-                             manager,
-                             &event->payload.cartesian);
+        case SYSTEM_EVENT_TYPE_JOG_DATA: {
+            system_manager_event_jog_data_handler(manager, &event->payload.jog_data);
         }
-        case SYSTEM_EVENT_TYPE_JOINTS_PATH: {
-            return system_manager_event_joints_path_handler(manager, &event->payload.joints_path);
-        }
-        case SYSTEM_EVENT_TYPE_CARTESIAN_PATH: {
-            return system_manager_event_cartesian_path_handler(manager,
-                                                               &event->payload.cartesian_path);
+        case SYSTEM_EVENT_TYPE_PATH_DATA: {
+            return system_manager_event_path_data_handler(manager, &event->payload.path_data);
         }
         case SYSTEM_EVENT_TYPE_START_PATH: {
             return system_manager_event_start_path_handler(manager, &event->payload.start_path);
@@ -323,6 +274,13 @@ static atlas_err_t system_manager_event_handler(system_manager_t* manager,
         case SYSTEM_EVENT_TYPE_STOP_PATH: {
             return system_manager_event_stop_path_handler(manager, &event->payload.stop_path);
         }
+        case SYSTEM_EVENT_TYPE_START_JOG: {
+            return system_manager_event_start_jog_handler(manager, &event->payload.start_jog);
+        }
+        case SYSTEM_EVENT_TYPE_STOP_JOG: {
+            return system_manager_event_stop_jog_handler(manager, &event->payload.stop_jog);
+        }
+
         default: {
             return ATLAS_ERR_UNKNOWN_EVENT;
         }
@@ -352,10 +310,12 @@ atlas_err_t system_manager_initialize(system_manager_t* manager)
 {
     ATLAS_ASSERT(manager);
 
-    manager->is_running = true;
-    manager->joints_path_index = 0U;
+    memset(&manager->status, 0, sizeof(manager->status));
 
-    memset(&manager->joints_path, 0, sizeof(manager->joints_path));
+    manager->status.path_index = 0U;
+    manager->status.state = ATLAS_STATE_IDLE;
+
+    manager->is_running = true;
 
     return ATLAS_ERR_OK;
 }

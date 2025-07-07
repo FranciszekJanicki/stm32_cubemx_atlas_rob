@@ -18,6 +18,27 @@
 #include <stm32l476xx.h>
 #include <stm32l4xx_hal.h>
 
+typedef enum {
+    JOINT_EVENT_TYPE_START,
+    JOINT_EVENT_TYPE_STOP,
+    JOINT_EVENT_TYPE_POSITION,
+} joint_event_type_t;
+
+typedef int joint_event_payload_start_t;
+typedef int joint_event_payload_stop_t;
+typedef float32_t joint_event_payload_position_t;
+
+typedef union {
+    joint_event_payload_start_t start;
+    joint_event_payload_stop_t stop;
+    joint_event_payload_position_t position;
+} joint_event_payload_t;
+
+typedef struct {
+    joint_event_type_t type;
+    joint_event_payload_t payload;
+} joint_event_t;
+
 typedef struct {
     float32_t joint_position;
     float32_t delta_time;

@@ -362,19 +362,20 @@ static atlas_err_t joint_manager_event_stop_handler(joint_manager_t* manager,
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t joint_manager_event_joint_handler(joint_manager_t* manager,
-                                                     joint_event_payload_joint_t const* joint)
+static atlas_err_t joint_manager_event_position_handler(
+    joint_manager_t* manager,
+    joint_event_payload_position_t const* position)
 {
-    ATLAS_ASSERT(manager && joint);
+    ATLAS_ASSERT(manager && position);
     ATLAS_LOG_FUNC(TAG);
 
     if (!manager->is_running) {
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    ATLAS_LOG(TAG, "joint_position: %d * 100", (int32_t)joint->position * 100);
+    ATLAS_LOG(TAG, "joint_position: %d * 100", (int32_t)*position * 100);
 
-    manager->joint_position = joint->position;
+    manager->joint_position = *position;
 
     return ATLAS_ERR_OK;
 }
@@ -430,8 +431,8 @@ static atlas_err_t joint_manager_event_handler(joint_manager_t* manager, joint_e
             return joint_manager_event_start_handler(manager, &event->payload.start);
         case JOINT_EVENT_TYPE_STOP:
             return joint_manager_event_stop_handler(manager, &event->payload.stop);
-        case JOINT_EVENT_TYPE_JOINT:
-            return joint_manager_event_joint_handler(manager, &event->payload.joint);
+        case JOINT_EVENT_TYPE_POSITION:
+            return joint_manager_event_position_handler(manager, &event->payload.position);
         default:
             return ATLAS_ERR_UNKNOWN_EVENT;
     }

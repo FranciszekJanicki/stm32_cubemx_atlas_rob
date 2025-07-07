@@ -117,30 +117,31 @@ static atlas_err_t joints_manager_event_stop_handler(joints_manager_t* task,
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t joints_manager_event_joints_handler(joints_manager_t* task,
-                                                       joints_event_payload_joints_t const* joints)
+static atlas_err_t joints_manager_event_ref_data_handler(
+    joints_manager_t* task,
+    joints_event_payload_ref_data_t const* ref_data)
 {
-    ATLAS_ASSERT(task && joints);
+    ATLAS_ASSERT(task && ref_data);
     ATLAS_LOG_FUNC(TAG);
 
     if (!task->is_running) {
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    joint_event_t event = {.type = JOINT_EVENT_TYPE_JOINT};
+    joint_event_t event = {.type = JOINT_EVENT_TYPE_POSITION};
     for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
-        if (task->joint_ctxs[num].position != joints->data.positions[num]) {
-            event.payload.joint.position = joints->data.positions[num];
+        if (task->joint_ctxs[num].position != ref_data->positions[num]) {
+            event.payload.position = ref_data->positions[num];
             ATLAS_LOG(TAG,
                       "joint %u position: %d * 100",
                       num + 1U,
-                      (int32_t)event.payload.joint.position * 100);
+                      (int32_t)event.payload.position * 100);
 
             if (!joints_manager_send_joint_event(task->joint_ctxs[num].queue, &event)) {
                 return ATLAS_ERR_FAIL;
             }
 
-            task->joint_ctxs[num].position = joints->data.positions[num];
+            task->joint_ctxs[num].position = ref_data->positions[num];
         } else {
             ATLAS_LOG(TAG, "No change in joint %u position", num + 1U);
         }
@@ -215,8 +216,8 @@ static atlas_err_t joints_manager_event_handler(joints_manager_t* task, joints_e
             return joints_manager_event_start_handler(task, &event->payload.start);
         case JOINTS_EVENT_TYPE_STOP:
             return joints_manager_event_stop_handler(task, &event->payload.stop);
-        case JOINTS_EVENT_TYPE_JOINTS:
-            return joints_manager_event_joints_handler(task, &event->payload.joints);
+        case JOINTS_EVENT_TYPE_REF_DATA:
+            return joints_manager_event_ref_data_handler(task, &event->payload.ref_data);
         default:
             return ATLAS_ERR_UNKNOWN_EVENT;
     }
