@@ -4,7 +4,7 @@
 #include "usart.h"
 
 extern void joints_delta_timer_callback(void);
-extern void packet_rob_packet_ready_callback(void);
+extern void rob_packet_ready_callback(void);
 extern void joint_pwm_pulse_callback(atlas_joint_num_t num);
 extern void uart_transmit_cplt_callback(void);
 
