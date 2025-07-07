@@ -2,7 +2,6 @@
 #include "FreeRTOS.h"
 #include "gpio.h"
 #include "joints_task.h"
-#include "kinematics_task.h"
 #include "packet_task.h"
 #include "system_task.h"
 #include "task.h"
@@ -29,14 +28,12 @@ int main(void)
     uart_mutex_initialize();
     joints_mutex_initialize();
     joints_queue_initialize();
-    kinematics_queue_initialize();
     packet_queue_initialize();
 
     system_task_initialize();
     packet_task_initialize();
     joints_task_initialize();
     uart_task_initialize();
-    kinematics_task_initialize();
 
     vTaskStartScheduler();
 }

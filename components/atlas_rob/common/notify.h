@@ -3,10 +3,10 @@
 
 typedef enum {
     SYSTEM_NOTIFY_JOINTS_READY = (1 << 0),
-    SYSTEM_NOTIFY_KINEMATICS_READY = (1 << 1),
-    SYSTEM_NOTIFY_PACKET_READY = (1 << 2),
+    SYSTEM_NOTIFY_PACKET_READY = (1 << 1),
+    SYSTEM_NOTIFY_RETRY_TIMER = (1 << 2),
     SYSTEM_NOTIFY_ALL =
-        (SYSTEM_NOTIFY_JOINTS_READY | SYSTEM_NOTIFY_KINEMATICS_READY | SYSTEM_NOTIFY_PACKET_READY),
+        (SYSTEM_NOTIFY_JOINTS_READY | SYSTEM_NOTIFY_PACKET_READY | SYSTEM_NOTIFY_RETRY_TIMER),
 } system_notify_t;
 
 typedef enum {
@@ -22,17 +22,13 @@ typedef enum {
 } joints_notify_t;
 
 typedef enum {
-    KINEMATICS_NOTIFY_ALL = (1 << 0),
-} kinematics_notify_t;
-
-typedef enum {
     UART_NOTIFY_TRANSMIT_COMPLETE = (1 << 0),
     UART_NOTIFY_ALL = (UART_NOTIFY_TRANSMIT_COMPLETE),
 } uart_notify_t;
 
 typedef enum {
-    PACKET_NOTIFY_PACKET_READY = (1 << 31),
-    PACKET_NOTIFY_ALL = (PACKET_NOTIFY_PACKET_READY),
+    PACKET_NOTIFY_ROB_PACKET_READY = (1 << 0),
+    PACKET_NOTIFY_ALL = (PACKET_NOTIFY_ROB_PACKET_READY),
 } packet_notify_t;
 
 #endif // COMMON_NOTIFY_H

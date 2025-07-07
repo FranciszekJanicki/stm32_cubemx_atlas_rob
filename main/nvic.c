@@ -4,7 +4,7 @@
 #include "usart.h"
 
 extern void joints_delta_timer_callback(void);
-extern void packet_ready_callback(void);
+extern void packet_rob_packet_ready_callback(void);
 extern void joint_pwm_pulse_callback(atlas_joint_num_t num);
 extern void uart_transmit_cplt_callback(void);
 
@@ -15,8 +15,7 @@ __attribute__((used)) void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim
     } else if (htim->Instance == TIM2) {
         joints_delta_timer_callback();
     } else if (htim->Instance == TIM3) {
-        // for testing
-        packet_ready_callback();
+        packet_rob_packet_ready_callback();
     }
 }
 
@@ -30,7 +29,7 @@ __attribute__((used)) void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef* 
 __attribute__((used)) void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     if (GPIO_Pin == 0x0000U) {
-        packet_ready_callback();
+        packet_rob_packet_ready_callback();
     }
 }
 

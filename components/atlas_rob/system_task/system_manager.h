@@ -12,8 +12,13 @@
 
 typedef struct {
     bool is_running;
+    bool is_joints_ready;
 
-    atlas_status_t status;
+    atlas_state_t state;
+
+    TIM_HandleTypeDef* retry_timer;
+
+    atlas_joints_data_t joints_data;
 } system_manager_t;
 
 atlas_err_t system_manager_initialize(system_manager_t* manager);
