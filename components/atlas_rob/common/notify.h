@@ -22,11 +22,6 @@ typedef enum {
 } joints_notify_t;
 
 typedef enum {
-    UART_NOTIFY_TRANSMIT_COMPLETE = (1 << 0),
-    UART_NOTIFY_ALL = (UART_NOTIFY_TRANSMIT_COMPLETE),
-} uart_notify_t;
-
-typedef enum {
     PACKET_NOTIFY_ROB_PACKET_READY = (1 << 0),
     PACKET_NOTIFY_ALL = (PACKET_NOTIFY_ROB_PACKET_READY),
 } packet_notify_t;

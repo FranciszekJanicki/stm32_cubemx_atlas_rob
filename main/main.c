@@ -1,5 +1,6 @@
 #include "main.h"
 #include "FreeRTOS.h"
+#include "atlas_rob.h"
 #include "gpio.h"
 #include "joints_task.h"
 #include "packet_task.h"
@@ -23,17 +24,7 @@ int main(void)
 
     HAL_Delay(500);
 
-    system_queue_initialize();
-    uart_stream_buffer_initialize();
-    uart_mutex_initialize();
-    joints_mutex_initialize();
-    joints_queue_initialize();
-    packet_queue_initialize();
-
-    system_task_initialize();
-    packet_task_initialize();
-    joints_task_initialize();
-    uart_task_initialize();
+    atlas_rob_initialize();
 
     vTaskStartScheduler();
 }

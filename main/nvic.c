@@ -6,7 +6,7 @@
 extern void joints_delta_timer_callback(void);
 extern void rob_packet_ready_callback(void);
 extern void joint_pwm_pulse_callback(atlas_joint_num_t num);
-extern void uart_transmit_cplt_callback(void);
+extern void uart_transmit_complete_callback(void);
 
 __attribute__((used)) void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim)
 {
@@ -36,6 +36,6 @@ __attribute__((used)) void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 __attribute__((used)) void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart)
 {
     if (huart->Instance == USART2) {
-        uart_transmit_cplt_callback();
+        uart_transmit_complete_callback();
     }
 }

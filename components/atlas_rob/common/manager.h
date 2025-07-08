@@ -24,8 +24,8 @@ typedef enum {
 } QueueType_t;
 
 typedef enum {
-    STREAM_BUF_TYPE_UART,
-    STREAM_BUF_TYPE_NUM,
+    STREAM_BUFFER_TYPE_UART,
+    STREAM_BUFFER_TYPE_NUM,
 } StreamBufferType_t;
 
 typedef enum {
@@ -36,7 +36,10 @@ typedef enum {
 
 DECLARE_HANDLE_MANAGER(task, TaskType_t, TaskHandle_t, TASK_TYPE_NUM)
 DECLARE_HANDLE_MANAGER(queue, QueueType_t, QueueHandle_t, QUEUE_TYPE_NUM)
-DECLARE_HANDLE_MANAGER(stream_buffer, StreamBufferType_t, StreamBufferHandle_t, STREAM_BUF_TYPE_NUM)
+DECLARE_HANDLE_MANAGER(stream_buffer,
+                       StreamBufferType_t,
+                       StreamBufferHandle_t,
+                       STREAM_BUFFER_TYPE_NUM)
 DECLARE_HANDLE_MANAGER(semaphore, SemaphoreType_t, SemaphoreHandle_t, SEMAPHORE_TYPE_NUM)
 
 #endif // COMMON_MANAGER_H
