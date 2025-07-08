@@ -2,15 +2,11 @@ add_executable(main)
 
 target_sources(main PRIVATE 
     main.c
-    hooks.c
-    syscalls.c
-    nvic.c
 )
 
 target_link_libraries(main PRIVATE
     stm32cubemx
     atlas_rob
-    atlas_core
 )
 
 target_compile_options(main PUBLIC

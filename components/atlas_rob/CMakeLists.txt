@@ -7,6 +7,9 @@ add_library(atlas_rob STATIC)
 
 target_sources(atlas_rob PRIVATE 
     atlas_rob.c
+    hooks.c
+    nvic.c
+    syscalls.c
 )  
 
 target_include_directories(atlas_rob PUBLIC

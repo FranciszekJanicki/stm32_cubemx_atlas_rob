@@ -24,4 +24,4 @@
 	url = git@github.com:FranciszekJanicki/atlas_core.git
 [submodule "components/uart_task"]
 	path = components/uart_task
-	url = https://github.com/FranciszekJanicki/uart_task
+	url = git@github.com:FranciszekJanicki/uart_task.git
