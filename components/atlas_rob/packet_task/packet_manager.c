@@ -272,7 +272,7 @@ atlas_err_t packet_manager_initialize(packet_manager_t* manager)
     return ATLAS_ERR_OK;
 }
 
-void packet_rob_packet_ready_callback(void)
+void rob_packet_ready_callback(void)
 {
     BaseType_t task_woken = pdFALSE;
 
