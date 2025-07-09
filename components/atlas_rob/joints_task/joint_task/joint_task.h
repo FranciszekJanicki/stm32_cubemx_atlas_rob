@@ -18,6 +18,7 @@ typedef struct {
 } joint_task_ctx_t;
 
 TaskHandle_t joint_task_initialize(joint_task_ctx_t* task_ctx,
+                                   char const* task_name,
                                    StaticTask_t* task_buffer,
                                    StackType_t (*task_stack)[JOINT_TASK_STACK_DEPTH]);
 

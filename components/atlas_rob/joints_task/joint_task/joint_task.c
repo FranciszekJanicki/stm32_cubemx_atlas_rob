@@ -23,13 +23,11 @@ static void joint_task_func(void* parameter)
 }
 
 TaskHandle_t joint_task_initialize(joint_task_ctx_t* task_ctx,
+                                   char const* task_name,
                                    StaticTask_t* task_buffer,
                                    StackType_t (*task_stack)[JOINT_TASK_STACK_DEPTH])
 {
     ATLAS_ASSERT(task_ctx && task_buffer && task_stack);
-
-    char task_name[15];
-    snprintf(task_name, sizeof(task_name), "%s_%d", "joint_task", task_ctx->num);
 
     TaskHandle_t joint_task = xTaskCreateStatic(joint_task_func,
                                                 task_name,

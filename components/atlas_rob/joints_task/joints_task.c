@@ -10,10 +10,10 @@
 #include <assert.h>
 #include <stdint.h>
 
-static char const* const TAG = "joints_task";
-
 #define JOINTS_TASK_STACK_DEPTH (5000U / sizeof(StackType_t))
 #define JOINTS_TASK_PRIORITY (1U)
+#define JOINTS_TASK_NAME ("joints_task")
+#define JOINTS_TASK_ARGUMENT (NULL)
 
 #define JOINTS_QUEUE_ITEMS (10U)
 #define JOINTS_QUEUE_ITEM_SIZE (sizeof(joints_event_t))
@@ -127,10 +127,10 @@ static joints_manager_t joints_manager = {};
 
 static void joints_task_func(void*)
 {
-    ATLAS_LOG_ON_ERR(TAG, joints_manager_initialize(&joints_manager));
+    ATLAS_LOG_ON_ERR(JOINTS_TASK_NAME, joints_manager_initialize(&joints_manager));
 
     while (1) {
-        ATLAS_LOG_ON_ERR(TAG, joints_manager_process(&joints_manager));
+        ATLAS_LOG_ON_ERR(JOINTS_TASK_NAME, joints_manager_process(&joints_manager));
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
@@ -140,9 +140,13 @@ void joint_tasks_initialize(void)
     static StackType_t joint_task_stacks[ATLAS_JOINT_NUM][JOINT_TASK_STACK_DEPTH];
     static StaticTask_t joint_task_buffers[ATLAS_JOINT_NUM];
 
+    char joint_task_name[15];
     for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
         joint_task_ctxs[num].num = num;
+        snprintf(joint_task_name, sizeof(joint_task_name), "%s_%d", "joint_task", num);
+
         TaskHandle_t joint_task = joint_task_initialize(&joint_task_ctxs[num],
+                                                        joint_task_name,
                                                         &joint_task_buffers[num],
                                                         &joint_task_stacks[num]);
 
@@ -170,9 +174,9 @@ void joints_task_initialize(void)
     static StackType_t joints_task_stack[JOINTS_TASK_STACK_DEPTH];
 
     TaskHandle_t joints_task = xTaskCreateStatic(joints_task_func,
-                                                 "joints_task",
+                                                 JOINTS_TASK_NAME,
                                                  JOINTS_TASK_STACK_DEPTH,
-                                                 NULL,
+                                                 JOINTS_TASK_ARGUMENT,
                                                  JOINTS_TASK_PRIORITY,
                                                  joints_task_stack,
                                                  &joints_task_buffer);
@@ -220,6 +224,8 @@ void joint_pwm_pulse_callback(atlas_joint_num_t num)
 
 #undef JOINTS_TASK_STACK_DEPTH
 #undef JOINTS_TASK_PRIORITY
+#undef JOINTS_TASK_NAME
+#undef JOINTS_TASK_ARGUMENT
 
 #undef JOINTS_QUEUE_ITEMS
 #undef JOINTS_QUEUE_ITEM_SIZE
