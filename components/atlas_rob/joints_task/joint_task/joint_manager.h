@@ -37,11 +37,19 @@ typedef struct {
 
     GPIO_TypeDef* a4988_gpio;
     uint32_t a4988_dir_pin;
+
     TIM_HandleTypeDef* a4988_pwm_timer;
     uint32_t a4988_pwm_channel;
-    I2C_HandleTypeDef* as5600_ina226_i2c_bus;
+
+    I2C_HandleTypeDef* tca9548_i2c_bus;
+    uint16_t tca9548_i2c_address;
+
+    tca9548_channel_t as5600_tca9548_channel;
     uint16_t as5600_i2c_address;
+
+    I2C_HandleTypeDef* ina226_i2c_bus;
     uint16_t ina226_i2c_address;
+
     GPIO_TypeDef* as5600_gpio;
     uint32_t as5600_dir_pin;
 } joint_manager_t;

@@ -11,34 +11,41 @@
 #include <stdint.h>
 #include <string.h>
 
-a4988_err_t a4988_gpio_write_pin(void* user, uint32_t pin, bool state);
-a4988_err_t a4988_pwm_start(void* user);
-a4988_err_t a4988_pwm_stop(void* user);
-a4988_err_t a4988_pwm_set_frequency(void* user, uint32_t frequency);
+a4988_err_t joint_a4988_gpio_write_pin(void* user, uint32_t pin, bool state);
+a4988_err_t joint_a4988_pwm_start(void* user);
+a4988_err_t joint_a4988_pwm_stop(void* user);
+a4988_err_t joint_a4988_pwm_set_frequency(void* user, uint32_t frequency);
 
-as5600_err_t as5600_gpio_write_pin(void* user, uint32_t pin, bool state);
-as5600_err_t as5600_bus_write_data(void* user,
-                                   uint8_t address,
-                                   uint8_t const* data,
-                                   size_t data_size);
-as5600_err_t as5600_bus_read_data(void* user, uint8_t address, uint8_t* data, size_t data_size);
+as5600_err_t joint_as5600_gpio_write_pin(void* user, uint32_t pin, bool state);
+as5600_err_t joint_as5600_bus_write_data(void* user,
+                                         uint8_t address,
+                                         uint8_t const* data,
+                                         size_t data_size);
+as5600_err_t joint_as5600_bus_read_data(void* user,
+                                        uint8_t address,
+                                        uint8_t* data,
+                                        size_t data_size);
 
-ina226_err_t ina226_bus_write_data(void* user,
-                                   uint8_t address,
-                                   uint8_t const* data,
-                                   size_t data_size);
-ina226_err_t ina226_bus_read_data(void* user, uint8_t address, uint8_t* data, size_t data_size);
+ina226_err_t joint_ina226_bus_write_data(void* user,
+                                         uint8_t address,
+                                         uint8_t const* data,
+                                         size_t data_size);
+ina226_err_t joint_ina226_bus_read_data(void* user,
+                                        uint8_t address,
+                                        uint8_t* data,
+                                        size_t data_size);
 
-step_motor_err_t step_motor_device_set_frequency(void* user, uint32_t frequency);
-step_motor_err_t step_motor_device_set_direction(void* user, step_motor_direction_t direction);
+step_motor_err_t joint_step_motor_device_set_frequency(void* user, uint32_t frequency);
+step_motor_err_t joint_step_motor_device_set_direction(void* user,
+                                                       step_motor_direction_t direction);
 
-motor_driver_err_t motor_driver_joint_set_speed(void* user, float32_t speed);
-motor_driver_err_t motor_driver_encoder_get_position(void* user, float32_t* position);
-motor_driver_err_t motor_driver_regulator_get_control(void* user,
-                                                      float32_t error,
-                                                      float32_t* control,
-                                                      float32_t delta_time);
-motor_driver_err_t motor_driver_fault_get_current(void* user, float32_t* current);
+motor_driver_err_t joint_motor_driver_motor_set_speed(void* user, float32_t speed);
+motor_driver_err_t joint_motor_driver_encoder_get_position(void* user, float32_t* position);
+motor_driver_err_t joint_motor_driver_regulator_get_control(void* user,
+                                                            float32_t error,
+                                                            float32_t* control,
+                                                            float32_t delta_time);
+motor_driver_err_t joint_motor_driver_fault_get_current(void* user, float32_t* current);
 
 static char const* const TAG = "joint_manager";
 
@@ -228,19 +235,19 @@ atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_confi
                                          .min_angle = config->min_position,
                                          .pgo_pin = 0x00},
                       &(as5600_interface_t){.gpio_user = manager,
-                                            .gpio_write_pin = as5600_gpio_write_pin,
+                                            .gpio_write_pin = joint_as5600_gpio_write_pin,
                                             .bus_user = manager,
-                                            .bus_read_data = as5600_bus_read_data,
-                                            .bus_write_data = as5600_bus_write_data});
+                                            .bus_read_data = joint_as5600_bus_read_data,
+                                            .bus_write_data = joint_as5600_bus_write_data});
 
     a4988_initialize(&manager->a4988,
                      &(a4988_config_t){.pin_dir = manager->a4988_dir_pin},
                      &(a4988_interface_t){.gpio_user = manager,
-                                          .gpio_write_pin = a4988_gpio_write_pin,
+                                          .gpio_write_pin = joint_a4988_gpio_write_pin,
                                           .pwm_user = manager,
-                                          .pwm_start = a4988_pwm_start,
-                                          .pwm_stop = a4988_pwm_stop,
-                                          .pwm_set_frequency = a4988_pwm_set_frequency});
+                                          .pwm_start = joint_a4988_pwm_start,
+                                          .pwm_stop = joint_a4988_pwm_stop,
+                                          .pwm_set_frequency = joint_a4988_pwm_set_frequency});
 
     step_motor_initialize(
         &manager->motor,
@@ -250,8 +257,8 @@ atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_confi
                                .max_speed = config->max_speed,
                                .step_change = 1.8F},
         &(step_motor_interface_t){.device_user = manager,
-                                  .device_set_frequency = step_motor_device_set_frequency,
-                                  .device_set_direction = step_motor_device_set_direction},
+                                  .device_set_frequency = joint_step_motor_device_set_frequency,
+                                  .device_set_direction = joint_step_motor_device_set_direction},
         0.0F);
 
     pid_regulator_initialize(&manager->regulator,
@@ -262,21 +269,21 @@ atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_confi
                                                        .min_control = config->min_speed,
                                                        .max_control = config->max_speed});
 
-    motor_driver_initialize(
-        &manager->driver,
-        &(motor_driver_config_t){.min_position = config->min_position,
-                                 .max_position = config->max_position,
-                                 .min_speed = config->min_speed,
-                                 .max_speed = config->max_speed,
-                                 .max_current = 2.0F},
-        &(motor_driver_interface_t){.motor_user = manager,
-                                    .motor_set_speed = motor_driver_joint_set_speed,
-                                    .encoder_user = manager,
-                                    .encoder_get_position = motor_driver_encoder_get_position,
-                                    .regulator_user = manager,
-                                    .regulator_get_control = motor_driver_regulator_get_control,
-                                    .fault_user = manager,
-                                    .fault_get_current = motor_driver_fault_get_current});
+    motor_driver_initialize(&manager->driver,
+                            &(motor_driver_config_t){.min_position = config->min_position,
+                                                     .max_position = config->max_position,
+                                                     .min_speed = config->min_speed,
+                                                     .max_speed = config->max_speed,
+                                                     .max_current = 2.0F},
+                            &(motor_driver_interface_t){
+                                .motor_user = manager,
+                                .motor_set_speed = joint_motor_driver_motor_set_speed,
+                                .encoder_user = manager,
+                                .encoder_get_position = joint_motor_driver_encoder_get_position,
+                                .regulator_user = manager,
+                                .regulator_get_control = joint_motor_driver_regulator_get_control,
+                                .fault_user = manager,
+                                .fault_get_current = joint_motor_driver_fault_get_current});
 
     if (!joint_manager_send_joints_notify(1 << manager->num)) {
         return ATLAS_ERR_FAIL;
