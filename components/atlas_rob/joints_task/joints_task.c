@@ -135,79 +135,67 @@ static void joints_task_func(void*)
     }
 }
 
-void joint_tasks_initialize(void)
+static void joint_queues_initialize(void)
 {
-    static StackType_t joint_task_stacks[ATLAS_JOINT_NUM][JOINT_TASK_STACK_DEPTH];
-    static StaticTask_t joint_task_buffers[ATLAS_JOINT_NUM];
-
-    char joint_task_name[15];
     for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
-        joint_task_ctxs[num].manager.num = num;
-        snprintf(joint_task_name, sizeof(joint_task_name), "%s_%d", "joint_task", num);
-
-        TaskHandle_t joint_task = joint_task_initialize(&joint_task_ctxs[num],
-                                                        joint_task_name,
-                                                        &joint_task_buffers[num],
-                                                        &joint_task_stacks[num]);
-
-        joints_manager.joint_ctxs[num].task = joint_task;
     }
 }
 
-void joint_queues_initialize(void)
+static void joint_tasks_initialize(void)
 {
     static uint8_t joint_queue_storages[ATLAS_JOINT_NUM][JOINT_QUEUE_STORAGE_SIZE];
     static StaticQueue_t joint_queue_buffers[ATLAS_JOINT_NUM];
 
+    static StackType_t joint_task_stacks[ATLAS_JOINT_NUM][JOINT_TASK_STACK_DEPTH];
+    static StaticTask_t joint_task_buffers[ATLAS_JOINT_NUM];
+
     for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
         QueueHandle_t joint_queue =
-            joint_queue_initialize(&joint_queue_buffers[num], &joint_queue_storages[num]);
+            joint_task_create_queue(&joint_queue_buffers[num], &joint_queue_storages[num]);
+
+        joint_task_ctxs[num].manager.joint_queue = joint_queue;
+        joint_task_ctxs[num].manager.num = num;
+
+        TaskHandle_t joint_task = joint_task_create_task(&joint_task_ctxs[num],
+                                                         &joint_task_buffers[num],
+                                                         &joint_task_stacks[num]);
 
         joints_manager.joint_ctxs[num].queue = joint_queue;
-        joint_task_ctxs[num].manager.joint_queue = joint_queue;
+        joints_manager.joint_ctxs[num].task = joint_task;
     }
 }
 
-void joints_task_initialize(void)
+TaskHandle_t joints_task_create_task(void)
 {
     static StaticTask_t joints_task_buffer;
     static StackType_t joints_task_stack[JOINTS_TASK_STACK_DEPTH];
 
-    TaskHandle_t joints_task = xTaskCreateStatic(joints_task_func,
-                                                 JOINTS_TASK_NAME,
-                                                 JOINTS_TASK_STACK_DEPTH,
-                                                 JOINTS_TASK_ARGUMENT,
-                                                 JOINTS_TASK_PRIORITY,
-                                                 joints_task_stack,
-                                                 &joints_task_buffer);
-
-    task_manager_set(TASK_TYPE_JOINTS, joints_task);
-
-    joint_tasks_initialize();
+    return xTaskCreateStatic(joints_task_func,
+                             JOINTS_TASK_NAME,
+                             JOINTS_TASK_STACK_DEPTH,
+                             JOINTS_TASK_ARGUMENT,
+                             JOINTS_TASK_PRIORITY,
+                             joints_task_stack,
+                             &joints_task_buffer);
 }
 
-void joints_queue_initialize(void)
+QueueHandle_t joints_task_create_queue(void)
 {
     static StaticQueue_t joints_queue_buffer;
     static uint8_t joints_queue_storage[JOINTS_QUEUE_STORAGE_SIZE];
 
-    QueueHandle_t joints_queue = xQueueCreateStatic(JOINTS_QUEUE_ITEMS,
-                                                    JOINTS_QUEUE_ITEM_SIZE,
-                                                    joints_queue_storage,
-                                                    &joints_queue_buffer);
-
-    queue_manager_set(QUEUE_TYPE_JOINTS, joints_queue);
-
-    joint_queues_initialize();
+    return xQueueCreateStatic(JOINTS_QUEUE_ITEMS,
+                              JOINTS_QUEUE_ITEM_SIZE,
+                              joints_queue_storage,
+                              &joints_queue_buffer);
 }
 
-void joints_mutex_initialize(void)
+void joints_task_initialize(void)
 {
-    static StaticSemaphore_t joints_mutex_buffer;
+    task_manager_set(TASK_TYPE_JOINTS, joints_task_create_task());
+    queue_manager_set(QUEUE_TYPE_JOINTS, joints_task_create_queue());
 
-    SemaphoreHandle_t joints_mutex = xSemaphoreCreateMutexStatic(&joints_mutex_buffer);
-
-    semaphore_manager_set(SEMAPHORE_TYPE_JOINTS, joints_mutex);
+    joint_tasks_initialize();
 }
 
 void joint_pwm_pulse_callback(atlas_joint_num_t num)

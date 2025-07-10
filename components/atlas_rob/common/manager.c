@@ -7,3 +7,4 @@ DEFINE_HANDLE_MANAGER(stream_buffer,
                       StreamBufferHandle_t,
                       STREAM_BUFFER_TYPE_NUM)
 DEFINE_HANDLE_MANAGER(semaphore, SemaphoreType_t, SemaphoreHandle_t, SEMAPHORE_TYPE_NUM)
+DEFINE_HANDLE_MANAGER(timer, TimerType_t, TimerHandle_t, TIMER_TYPE_NUM);

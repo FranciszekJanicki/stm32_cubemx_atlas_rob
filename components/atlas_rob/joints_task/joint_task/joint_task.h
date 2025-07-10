@@ -16,12 +16,11 @@ typedef struct {
     atlas_joint_config_t config;
 } joint_task_ctx_t;
 
-TaskHandle_t joint_task_initialize(joint_task_ctx_t* task_ctx,
-                                   char const* task_name,
-                                   StaticTask_t* task_buffer,
-                                   StackType_t (*task_stack)[JOINT_TASK_STACK_DEPTH]);
+TaskHandle_t joint_task_create_task(joint_task_ctx_t* task_ctx,
+                                    StaticTask_t* task_buffer,
+                                    StackType_t (*task_stack)[JOINT_TASK_STACK_DEPTH]);
 
-QueueHandle_t joint_queue_initialize(StaticQueue_t* queue_buffer,
-                                     uint8_t (*queue_storage)[JOINT_QUEUE_STORAGE_SIZE]);
+QueueHandle_t joint_task_create_queue(StaticQueue_t* queue_buffer,
+                                      uint8_t (*queue_storage)[JOINT_QUEUE_STORAGE_SIZE]);
 
 #endif // JOINT_TASK_JOINT_TASK_H

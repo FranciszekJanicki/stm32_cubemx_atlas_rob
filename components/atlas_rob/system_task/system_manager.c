@@ -46,14 +46,14 @@ static inline bool system_manager_start_retry_timer(system_manager_t* manager)
 {
     ATLAS_ASSERT(manager);
 
-    return HAL_TIM_Base_Start_IT(manager->retry_timer) == HAL_OK ? ATLAS_ERR_OK : ATLAS_ERR_FAIL;
+    xTimerStart(manager->retry_timer, pdMS_TO_TICKS(1)) == pdPASS;
 }
 
 static inline bool system_manager_stop_retry_timer(system_manager_t* manager)
 {
     ATLAS_ASSERT(manager);
 
-    return HAL_TIM_Base_Stop_IT(manager->retry_timer) == HAL_OK ? ATLAS_ERR_OK : ATLAS_ERR_FAIL;
+    return xTimerStart(manager->retry_timer, pdMS_TO_TICKS(1)) == pdPASS;
 }
 
 static atlas_err_t system_manager_notify_joints_ready_handler(system_manager_t* manager)
@@ -271,6 +271,3 @@ atlas_err_t system_manager_initialize(system_manager_t* manager)
 
     return ATLAS_ERR_OK;
 }
-
-void system_retry_timer_callback(void)
-{}

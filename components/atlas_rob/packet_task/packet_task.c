@@ -26,33 +26,35 @@ static void packet_task_func(void*)
     }
 }
 
-void packet_task_initialize(void)
+TaskHandle_t packet_task_create_task(void)
 {
     static StaticTask_t packet_task_buffer;
     static StackType_t packet_task_stack[PACKET_TASK_STACK_DEPTH];
 
-    TaskHandle_t packet_task = xTaskCreateStatic(packet_task_func,
-                                                 "packet_task",
-                                                 PACKET_TASK_STACK_DEPTH,
-                                                 NULL,
-                                                 PACKET_TASK_PRIORITY,
-                                                 packet_task_stack,
-                                                 &packet_task_buffer);
-
-    task_manager_set(TASK_TYPE_PACKET, packet_task);
+    return xTaskCreateStatic(packet_task_func,
+                             PACKET_TASK_NAME,
+                             PACKET_TASK_STACK_DEPTH,
+                             PACKET_TASK_ARGUMENT,
+                             PACKET_TASK_PRIORITY,
+                             packet_task_stack,
+                             &packet_task_buffer);
 }
 
-void packet_queue_initialize(void)
+QueueHandle_t packet_task_create_queue(void)
 {
     static StaticQueue_t packet_queue_buffer;
     static uint8_t packet_queue_storage[PACKET_QUEUE_STORAGE_SIZE];
 
-    QueueHandle_t packet_queue = xQueueCreateStatic(PACKET_QUEUE_ITEMS,
-                                                    PACKET_QUEUE_ITEM_SIZE,
-                                                    packet_queue_storage,
-                                                    &packet_queue_buffer);
+    return xQueueCreateStatic(PACKET_QUEUE_ITEMS,
+                              PACKET_QUEUE_ITEM_SIZE,
+                              packet_queue_storage,
+                              &packet_queue_buffer);
+}
 
-    queue_manager_set(QUEUE_TYPE_PACKET, packet_queue);
+void packet_task_initialize(void)
+{
+    queue_manager_set(QUEUE_TYPE_PACKET, packet_task_create_queue());
+    task_manager_set(TASK_TYPE_PACKET, packet_task_create_task());
 }
 
 #undef PACKET_TASK_STACK_DEPTH

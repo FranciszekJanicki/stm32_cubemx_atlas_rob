@@ -15,6 +15,12 @@
 #define SYSTEM_QUEUE_ITEM_SIZE (sizeof(system_event_t))
 #define SYSTEM_QUEUE_STORAGE_SIZE (SYSTEM_QUEUE_ITEMS * SYSTEM_QUEUE_ITEM_SIZE)
 
+#define SYSTEM_TIMER_NAME ("system_timer")
+#define SYSTEM_TIMER_PERIOD_MS (10000U)
+#define SYSTEM_TIMER_PERIOD_TICKS (pdMS_TO_TICKS(SYSTEM_TIMER_PERIOD_MS))
+#define SYSTEM_TIMER_ID (NULL)
+#define SYSTEM_TIMER_AUTORELOAD (pdTRUE)
+
 static void system_task_func(void*)
 {
     system_manager_t manager;
@@ -26,33 +32,60 @@ static void system_task_func(void*)
     }
 }
 
-void system_task_initialize(void)
+static void system_timer_callback(TimerHandle_t timer)
+{
+    BaseType_t task_woken = pdFALSE;
+
+    xTaskNotifyFromISR(task_manager_get(TASK_TYPE_SYSTEM),
+                       SYSTEM_NOTIFY_RETRY_TIMER,
+                       eSetBits,
+                       &task_woken);
+
+    portYIELD_FROM_ISR(task_woken);
+}
+
+TaskHandle_t  system_task_create_task(void)
 {
     static StaticTask_t system_task_buffer;
     static StackType_t system_task_stack[SYSTEM_TASK_STACK_DEPTH];
 
-    TaskHandle_t system_task = xTaskCreateStatic(system_task_func,
-                                                 SYSTEM_TASK_NAME,
-                                                 SYSTEM_TASK_STACK_DEPTH,
-                                                 SYSTEM_TASK_ARGUMENT,
-                                                 SYSTEM_TASK_PRIORITY,
-                                                 system_task_stack,
-                                                 &system_task_buffer);
-
-    task_manager_set(TASK_TYPE_SYSTEM, system_task);
+    return xTaskCreateStatic(system_task_func,
+                             SYSTEM_TASK_NAME,
+                             SYSTEM_TASK_STACK_DEPTH,
+                             SYSTEM_TASK_ARGUMENT,
+                             SYSTEM_TASK_PRIORITY,
+                             system_task_stack,
+                             &system_task_buffer);
 }
 
-void system_queue_initialize(void)
+QueueHandle_t  system_task_create_queue(void)
 {
     static StaticQueue_t system_queue_buffer;
     static uint8_t system_queue_storage[SYSTEM_QUEUE_STORAGE_SIZE];
 
-    QueueHandle_t system_queue = xQueueCreateStatic(SYSTEM_QUEUE_ITEMS,
-                                                    SYSTEM_QUEUE_ITEM_SIZE,
-                                                    system_queue_storage,
-                                                    &system_queue_buffer);
+    return xQueueCreateStatic(SYSTEM_QUEUE_ITEMS,
+                              SYSTEM_QUEUE_ITEM_SIZE,
+                              system_queue_storage,
+                              &system_queue_buffer);
+}
 
-    queue_manager_set(QUEUE_TYPE_SYSTEM, system_queue);
+TimerHandle_t  system_task_create_timer(void)
+{
+    static StaticTimer_t system_timer_buffer;
+
+    return xTimerCreateStatic(SYSTEM_TIMER_NAME,
+                              SYSTEM_TIMER_PERIOD_TICKS,
+                              SYSTEM_TIMER_AUTORELOAD,
+                              SYSTEM_TIMER_ID,
+                              system_timer_callback,
+                              &system_timer_buffer);
+}
+
+void system_task_initialize(void)
+{
+    queue_manager_set(QUEUE_TYPE_SYSTEM, system_task_create_queue());
+    timer_manager_set(TIMER_TYPE_SYSTEM, system_task_create_timer());
+    task_manager_set(TASK_TYPE_SYSTEM, system_task_create_task());
 }
 
 #undef SYSTEM_TASK_STACK_DEPTH
