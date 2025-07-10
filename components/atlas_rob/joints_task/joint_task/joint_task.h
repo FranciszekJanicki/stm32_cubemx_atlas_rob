@@ -14,7 +14,6 @@
 typedef struct {
     joint_manager_t manager;
     atlas_joint_config_t config;
-    atlas_joint_num_t num;
 } joint_task_ctx_t;
 
 TaskHandle_t joint_task_initialize(joint_task_ctx_t* task_ctx,

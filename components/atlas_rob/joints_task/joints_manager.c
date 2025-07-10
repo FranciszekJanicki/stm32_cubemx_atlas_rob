@@ -135,10 +135,11 @@ static atlas_err_t joints_manager_event_stop_handler(joints_manager_t* manager,
     return ATLAS_ERR_OK;
 }
 
-static atlas_err_t joints_manager_event_data_handler(joints_manager_t* manager,
-                                                     joints_event_payload_data_t const* data)
+static atlas_err_t joints_manager_event_reference_data_handler(
+    joints_manager_t* manager,
+    joints_event_payload_reference_data_t const* reference_data)
 {
-    ATLAS_ASSERT(manager && data);
+    ATLAS_ASSERT(manager && reference_data);
     ATLAS_LOG_FUNC(TAG);
 
     if (!manager->is_running) {
@@ -147,20 +148,52 @@ static atlas_err_t joints_manager_event_data_handler(joints_manager_t* manager,
 
     joint_event_t event = {.type = JOINT_EVENT_TYPE_POSITION};
     for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
-        if (manager->joint_ctxs[num].position != data->positions[num]) {
-            event.payload.position = data->positions[num];
-            ATLAS_LOG(TAG,
-                      "joint %u position: %d * 100",
-                      num + 1U,
-                      (int32_t)event.payload.position * 100);
+        if (manager->joint_ctxs[num].reference_position != reference_data->positions[num]) {
+            event.payload.position = reference_data->positions[num];
 
             if (!joints_manager_send_joint_event(manager->joint_ctxs[num].queue, &event)) {
                 return ATLAS_ERR_FAIL;
             }
 
-            manager->joint_ctxs[num].position = data->positions[num];
-        } else {
-            ATLAS_LOG(TAG, "No change in joint %u position", num + 1U);
+            ATLAS_LOG(TAG,
+                      "joint %u reference position: %d * 100",
+                      num + 1U,
+                      (int32_t)reference_data->positions[num] * 100);
+
+            manager->joint_ctxs[num].reference_position = reference_data->positions[num];
+        }
+    }
+
+    return ATLAS_ERR_OK;
+}
+
+static atlas_err_t joints_manager_event_measure_data_handler(
+    joints_manager_t* manager,
+    joints_event_payload_measure_data_t const* measure_data)
+{
+    ATLAS_ASSERT(manager && measure_data);
+    ATLAS_LOG_FUNC(TAG);
+
+    if (!manager->is_running) {
+        return ATLAS_ERR_NOT_RUNNING;
+    }
+
+    if (manager->joint_ctxs[measure_data->num].measure_position != measure_data->position) {
+        manager->joint_ctxs[measure_data->num].measure_position = measure_data->position;
+
+        system_event_t event = {.origin = SYSTEM_EVENT_ORIGIN_JOINTS,
+                                .type = SYSTEM_EVENT_TYPE_JOINTS_DATA};
+        for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
+            event.payload.joints_data.positions[num] = manager->joint_ctxs[num].measure_position;
+
+            ATLAS_LOG(TAG,
+                      "joint %u measure position: %d * 100",
+                      num + 1U,
+                      (int32_t)manager->joint_ctxs[num].measure_position * 100);
+        }
+
+        if (!joints_manager_send_system_event(&event)) {
+            return ATLAS_ERR_FAIL;
         }
     }
 
@@ -230,14 +263,22 @@ static atlas_err_t joints_manager_event_handler(joints_manager_t* manager,
     ATLAS_ASSERT(manager && event);
 
     switch (event->type) {
-        case JOINTS_EVENT_TYPE_START:
+        case JOINTS_EVENT_TYPE_START: {
             return joints_manager_event_start_handler(manager, &event->payload.start);
-        case JOINTS_EVENT_TYPE_STOP:
+        }
+        case JOINTS_EVENT_TYPE_STOP: {
             return joints_manager_event_stop_handler(manager, &event->payload.stop);
-        case JOINTS_EVENT_TYPE_DATA:
-            return joints_manager_event_data_handler(manager, &event->payload.data);
-        default:
+        }
+        case JOINTS_EVENT_TYPE_REFERENCE_DATA: {
+            return joints_manager_event_reference_data_handler(manager,
+                                                               &event->payload.reference_data);
+        }
+        case JOINTS_EVENT_TYPE_MEASURE_DATA: {
+            return joints_manager_event_measure_data_handler(manager, &event->payload.measure_data);
+        }
+        default: {
             return ATLAS_ERR_UNKNOWN_EVENT;
+        }
     }
 }
 

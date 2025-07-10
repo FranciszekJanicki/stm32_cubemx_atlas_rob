@@ -17,7 +17,8 @@ typedef struct {
         TaskHandle_t task;
         QueueHandle_t queue;
         bool is_ready;
-        float position;
+        float reference_position;
+        float measure_position;
     } joint_ctxs[ATLAS_JOINT_NUM];
 } joints_manager_t;
 

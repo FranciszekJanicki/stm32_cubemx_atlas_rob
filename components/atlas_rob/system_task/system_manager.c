@@ -157,8 +157,8 @@ static atlas_err_t system_manager_event_reference_joints_data_handler(
     ATLAS_ASSERT(manager && joints_data);
     ATLAS_LOG_FUNC(TAG);
 
-    joints_event_t event = {.type = JOINTS_EVENT_TYPE_DATA};
-    event.payload.data = *joints_data;
+    joints_event_t event = {.type = JOINTS_EVENT_TYPE_REFERENCE_DATA};
+    event.payload.reference_data = *joints_data;
 
     if (!system_manager_send_joints_event(&event)) {
         return ATLAS_ERR_FAIL;

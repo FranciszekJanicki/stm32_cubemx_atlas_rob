@@ -29,19 +29,47 @@ typedef struct {
 } system_event_t;
 
 typedef enum {
+    JOINT_EVENT_TYPE_START,
+    JOINT_EVENT_TYPE_STOP,
+    JOINT_EVENT_TYPE_POSITION,
+} joint_event_type_t;
+
+typedef int joint_event_payload_start_t;
+typedef int joint_event_payload_stop_t;
+typedef float32_t joint_event_payload_position_t;
+
+typedef union {
+    joint_event_payload_start_t start;
+    joint_event_payload_stop_t stop;
+    joint_event_payload_position_t position;
+} joint_event_payload_t;
+
+typedef struct {
+    joint_event_type_t type;
+    joint_event_payload_t payload;
+} joint_event_t;
+
+typedef enum {
     JOINTS_EVENT_TYPE_START,
     JOINTS_EVENT_TYPE_STOP,
-    JOINTS_EVENT_TYPE_DATA,
+    JOINTS_EVENT_TYPE_REFERENCE_DATA,
+    JOINTS_EVENT_TYPE_MEASURE_DATA,
 } joints_event_type_t;
 
 typedef int joints_event_payload_start_t;
 typedef int joints_event_payload_stop_t;
-typedef atlas_joints_data_t joints_event_payload_data_t;
+typedef atlas_joints_data_t joints_event_payload_reference_data_t;
+
+typedef struct {
+    atlas_joint_num_t num;
+    float32_t position;
+} joints_event_payload_measure_data_t;
 
 typedef union {
     joints_event_payload_start_t start;
     joints_event_payload_stop_t stop;
-    joints_event_payload_data_t data;
+    joints_event_payload_reference_data_t reference_data;
+    joints_event_payload_measure_data_t measure_data;
 } joints_event_payload_t;
 
 typedef struct {

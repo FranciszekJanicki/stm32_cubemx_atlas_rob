@@ -142,7 +142,7 @@ void joint_tasks_initialize(void)
 
     char joint_task_name[15];
     for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
-        joint_task_ctxs[num].num = num;
+        joint_task_ctxs[num].manager.num = num;
         snprintf(joint_task_name, sizeof(joint_task_name), "%s_%d", "joint_task", num);
 
         TaskHandle_t joint_task = joint_task_initialize(&joint_task_ctxs[num],

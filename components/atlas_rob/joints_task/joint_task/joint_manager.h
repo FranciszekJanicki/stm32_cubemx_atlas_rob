@@ -12,35 +12,17 @@
 #include "semphr.h"
 #include "step_motor.h"
 #include "task.h"
+#include "tca9548.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stm32l476xx.h>
 #include <stm32l4xx_hal.h>
 
-typedef enum {
-    JOINT_EVENT_TYPE_START,
-    JOINT_EVENT_TYPE_STOP,
-    JOINT_EVENT_TYPE_POSITION,
-} joint_event_type_t;
-
-typedef int joint_event_payload_start_t;
-typedef int joint_event_payload_stop_t;
-typedef float32_t joint_event_payload_position_t;
-
-typedef union {
-    joint_event_payload_start_t start;
-    joint_event_payload_stop_t stop;
-    joint_event_payload_position_t position;
-} joint_event_payload_t;
-
 typedef struct {
-    joint_event_type_t type;
-    joint_event_payload_t payload;
-} joint_event_t;
-
-typedef struct {
-    float32_t joint_position;
+    atlas_joint_num_t num;
+    float32_t measure_position;
+    float32_t reference_position;
     float32_t delta_time;
     bool is_running;
 
@@ -55,21 +37,16 @@ typedef struct {
 
     GPIO_TypeDef* a4988_gpio;
     uint32_t a4988_dir_pin;
-
     TIM_HandleTypeDef* a4988_pwm_timer;
     uint32_t a4988_pwm_channel;
-
     I2C_HandleTypeDef* as5600_ina226_i2c_bus;
     uint16_t as5600_i2c_address;
     uint16_t ina226_i2c_address;
-
     GPIO_TypeDef* as5600_gpio;
     uint32_t as5600_dir_pin;
 } joint_manager_t;
 
-atlas_err_t joint_manager_initialize(joint_manager_t* manager,
-                                     atlas_joint_config_t const* config,
-                                     atlas_joint_num_t num);
+atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_config_t const* config);
 atlas_err_t joint_manager_process(joint_manager_t* manager);
 
 #endif // JOINT_TASK_JOINT_MANAGER_H
