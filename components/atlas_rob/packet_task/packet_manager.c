@@ -66,13 +66,6 @@ static inline void packet_manager_set_hmi_packet_ready_pin(packet_manager_t* man
                       (GPIO_PinState)state);
 }
 
-static inline bool packet_manager_get_rob_packet_ready_pin(packet_manager_t* manager)
-{
-    ATLAS_ASSERT(manager);
-
-    return (bool)HAL_GPIO_ReadPin(manager->rob_packet_ready_gpio, manager->rob_packet_ready_pin);
-}
-
 static atlas_err_t packet_manager_packet_joints_data_handler(
     packet_manager_t* manager,
     atlas_rob_packet_payload_joints_data_t const* joints_data)
@@ -171,11 +164,9 @@ static atlas_err_t packet_manager_notify_rob_packet_ready_handler(packet_manager
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    if (packet_manager_get_rob_packet_ready_pin(manager)) {
-        atlas_rob_packet_t packet;
-        if (packet_manager_receive_rob_packet(manager, &packet)) {
-            ATLAS_RET_ON_ERR(packet_manager_rob_packet_handler(manager, &packet));
-        }
+    atlas_rob_packet_t packet;
+    if (packet_manager_receive_rob_packet(manager, &packet)) {
+        ATLAS_RET_ON_ERR(packet_manager_rob_packet_handler(manager, &packet));
     }
 
     return ATLAS_ERR_OK;
