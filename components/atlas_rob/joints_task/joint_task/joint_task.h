@@ -4,7 +4,7 @@
 #include "common.h"
 #include "joint_manager.h"
 
-#define JOINT_TASK_STACK_DEPTH (3000U / sizeof(StackType_t))
+#define JOINT_TASK_STACK_DEPTH (5000U / sizeof(StackType_t))
 #define JOINT_TASK_PRIORITY (1U)
 
 #define JOINT_QUEUE_ITEMS (10U)
@@ -12,8 +12,8 @@
 #define JOINT_QUEUE_STORAGE_SIZE (JOINT_QUEUE_ITEMS * JOINT_QUEUE_ITEM_SIZE)
 
 typedef struct {
-    joint_manager_t manager;
-    atlas_joint_config_t config;
+    joint_interface_t interface;
+    joint_config_t config;
 } joint_task_ctx_t;
 
 TaskHandle_t joint_task_create_task(joint_task_ctx_t* task_ctx,

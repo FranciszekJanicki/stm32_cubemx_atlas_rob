@@ -11,6 +11,8 @@
 
 static char const* const TAG = "joints_manager";
 
+extern tca9548_err_t joints_tca9548_initialize(void);
+
 static inline bool joints_manager_has_joints_event()
 {
     return uxQueueMessagesWaiting(queue_manager_get(QUEUE_TYPE_JOINTS));
@@ -304,6 +306,8 @@ atlas_err_t joints_manager_initialize(joints_manager_t* manager)
     ATLAS_ASSERT(manager);
 
     manager->is_running = false;
+
+    joints_tca9548_initialize();
 
     for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
         manager->joint_ctxs[num].is_ready = false;

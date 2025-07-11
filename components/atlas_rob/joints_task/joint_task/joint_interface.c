@@ -36,7 +36,6 @@ static bool frequency_to_prescaler_and_period(uint32_t frequency,
     return true;
 }
 
-static SemaphoreHandle_t joint_mutex = NULL;
 static tca9548_t joint_tca9548 = {};
 
 tca9548_err_t joint_tca9548_bus_write_data(void* user,
@@ -44,11 +43,11 @@ tca9548_err_t joint_tca9548_bus_write_data(void* user,
                                            uint8_t const* data,
                                            size_t data_size)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (manager->tca9548_i2c_bus) {
-        HAL_I2C_Mem_Write(manager->tca9548_i2c_bus,
-                          manager->tca9548_i2c_address,
+    if (interface->tca9548_i2c_bus) {
+        HAL_I2C_Mem_Write(interface->tca9548_i2c_bus,
+                          interface->tca9548_i2c_address,
                           address,
                           I2C_MEMADD_SIZE_8BIT,
                           (uint8_t*)data,
@@ -64,11 +63,11 @@ tca9548_err_t joint_tca9548_bus_read_data(void* user,
                                           uint8_t* data,
                                           size_t data_size)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (manager->tca9548_i2c_bus) {
-        HAL_I2C_Mem_Read(manager->tca9548_i2c_bus,
-                         manager->tca9548_i2c_address,
+    if (interface->tca9548_i2c_bus) {
+        HAL_I2C_Mem_Read(interface->tca9548_i2c_bus,
+                         interface->tca9548_i2c_address,
                          address,
                          I2C_MEMADD_SIZE_8BIT,
                          data,
@@ -79,21 +78,17 @@ tca9548_err_t joint_tca9548_bus_read_data(void* user,
     return AS5600_ERR_OK;
 }
 
-tca9548_err_t joint_tca9548_initialize()
+tca9548_err_t joints_tca9548_initialize(void)
 {
-    static StaticSemaphore_t joint_mutex_buffer;
-
-    joint_mutex = xSemaphoreCreateMutexStatic(&joint_mutex_buffer);
-
     return tca9548_initialize(&joint_tca9548, &(tca9548_config_t){}, &(tca9548_interface_t){});
 }
 
 a4988_err_t joint_a4988_gpio_write_pin(void* user, uint32_t pin, bool state)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (manager->a4988_gpio) {
-        HAL_GPIO_WritePin(manager->a4988_gpio, pin, (GPIO_PinState)state);
+    if (interface->a4988_gpio) {
+        HAL_GPIO_WritePin(interface->a4988_gpio, pin, (GPIO_PinState)state);
     }
 
     return A4988_ERR_OK;
@@ -101,10 +96,10 @@ a4988_err_t joint_a4988_gpio_write_pin(void* user, uint32_t pin, bool state)
 
 a4988_err_t joint_a4988_pwm_start(void* user)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (manager->a4988_pwm_timer) {
-        HAL_TIM_PWM_Start_IT(manager->a4988_pwm_timer, manager->a4988_pwm_channel);
+    if (interface->a4988_pwm_timer) {
+        HAL_TIM_PWM_Start_IT(interface->a4988_pwm_timer, interface->a4988_pwm_channel);
     }
 
     return A4988_ERR_OK;
@@ -112,10 +107,10 @@ a4988_err_t joint_a4988_pwm_start(void* user)
 
 a4988_err_t joint_a4988_pwm_stop(void* user)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (manager->a4988_pwm_timer) {
-        HAL_TIM_PWM_Stop_IT(manager->a4988_pwm_timer, manager->a4988_pwm_channel);
+    if (interface->a4988_pwm_timer) {
+        HAL_TIM_PWM_Stop_IT(interface->a4988_pwm_timer, interface->a4988_pwm_channel);
     }
 
     return A4988_ERR_OK;
@@ -123,7 +118,7 @@ a4988_err_t joint_a4988_pwm_stop(void* user)
 
 a4988_err_t joint_a4988_pwm_set_frequency(void* user, uint32_t frequency)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
     uint32_t prescaler;
     uint32_t period;
@@ -134,14 +129,14 @@ a4988_err_t joint_a4988_pwm_set_frequency(void* user, uint32_t frequency)
                                           0xFFFFU,
                                           &prescaler,
                                           &period)) {
-        if (manager->a4988_pwm_timer) {
-            __HAL_TIM_DISABLE(manager->a4988_pwm_timer);
-            __HAL_TIM_SET_PRESCALER(manager->a4988_pwm_timer, prescaler);
-            __HAL_TIM_SET_AUTORELOAD(manager->a4988_pwm_timer, period);
-            __HAL_TIM_SET_COMPARE(manager->a4988_pwm_timer,
-                                  manager->a4988_pwm_channel,
+        if (interface->a4988_pwm_timer) {
+            __HAL_TIM_DISABLE(interface->a4988_pwm_timer);
+            __HAL_TIM_SET_PRESCALER(interface->a4988_pwm_timer, prescaler);
+            __HAL_TIM_SET_AUTORELOAD(interface->a4988_pwm_timer, period);
+            __HAL_TIM_SET_COMPARE(interface->a4988_pwm_timer,
+                                  interface->a4988_pwm_channel,
                                   period / 2U);
-            __HAL_TIM_ENABLE(manager->a4988_pwm_timer);
+            __HAL_TIM_ENABLE(interface->a4988_pwm_timer);
         }
     }
 
@@ -150,10 +145,10 @@ a4988_err_t joint_a4988_pwm_set_frequency(void* user, uint32_t frequency)
 
 as5600_err_t joint_as5600_gpio_write_pin(void* user, uint32_t pin, bool state)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (manager->as5600_gpio) {
-        HAL_GPIO_WritePin(manager->as5600_gpio, pin, (GPIO_PinState)state);
+    if (interface->as5600_gpio) {
+        HAL_GPIO_WritePin(interface->as5600_gpio, pin, (GPIO_PinState)state);
     }
 
     return A4988_ERR_OK;
@@ -164,16 +159,15 @@ as5600_err_t joint_as5600_bus_write_data(void* user,
                                          uint8_t const* data,
                                          size_t data_size)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (xSemaphoreTake(joint_mutex, pdMS_TO_TICKS(1))) {
+    if (xSemaphoreTake(semaphore_manager_get(SEMAPHORE_TYPE_JOINTS), pdMS_TO_TICKS(1))) {
         tca9548_write_channel_data(&joint_tca9548,
-                                   manager->as5600_tca9548_channel,
+                                   interface->as5600_tca9548_channel,
                                    address,
                                    data,
                                    data_size);
-
-        xSemaphoreGive(joint_mutex);
+        xSemaphoreGive(semaphore_manager_get(SEMAPHORE_TYPE_JOINTS));
     }
 
     return AS5600_ERR_OK;
@@ -184,16 +178,15 @@ as5600_err_t joint_as5600_bus_read_data(void* user,
                                         uint8_t* data,
                                         size_t data_size)
 {
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (xSemaphoreTake(joint_mutex, pdMS_TO_TICKS(1))) {
+    if (xSemaphoreTake(semaphore_manager_get(SEMAPHORE_TYPE_JOINTS), pdMS_TO_TICKS(1))) {
         tca9548_read_channel_data(&joint_tca9548,
-                                  manager->as5600_tca9548_channel,
+                                  interface->as5600_tca9548_channel,
                                   address,
                                   data,
                                   data_size);
-
-        xSemaphoreGive(joint_mutex);
+        xSemaphoreGive(semaphore_manager_get(SEMAPHORE_TYPE_JOINTS));
     }
 
     return AS5600_ERR_OK;
@@ -206,19 +199,18 @@ ina226_err_t joint_ina226_bus_write_data(void* user,
 {
     ATLAS_ASSERT(user && data);
 
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (manager->ina226_i2c_bus) {
-        if (xSemaphoreTake(joint_mutex, pdMS_TO_TICKS(1))) {
-            HAL_I2C_Mem_Write(manager->ina226_i2c_bus,
-                              manager->ina226_i2c_address,
+    if (interface->ina226_i2c_bus) {
+        if (xSemaphoreTake(semaphore_manager_get(SEMAPHORE_TYPE_JOINTS), pdMS_TO_TICKS(1))) {
+            HAL_I2C_Mem_Write(interface->ina226_i2c_bus,
+                              interface->ina226_i2c_address,
                               address,
                               I2C_MEMADD_SIZE_8BIT,
                               (uint8_t*)data,
                               data_size,
                               100U);
-
-            xSemaphoreGive(joint_mutex);
+            xSemaphoreGive(semaphore_manager_get(SEMAPHORE_TYPE_JOINTS));
         }
     }
 
@@ -232,19 +224,18 @@ ina226_err_t joint_ina226_bus_read_data(void* user,
 {
     ATLAS_ASSERT(user && data);
 
-    joint_manager_t* manager = (joint_manager_t*)user;
+    joint_interface_t* interface = (joint_interface_t*)user;
 
-    if (manager->ina226_i2c_bus) {
-        if (xSemaphoreTake(joint_mutex, pdMS_TO_TICKS(1))) {
-            HAL_I2C_Mem_Read(manager->ina226_i2c_bus,
-                             manager->ina226_i2c_address,
+    if (interface->ina226_i2c_bus) {
+        if (xSemaphoreTake(semaphore_manager_get(SEMAPHORE_TYPE_JOINTS), pdMS_TO_TICKS(1))) {
+            HAL_I2C_Mem_Read(interface->ina226_i2c_bus,
+                             interface->ina226_i2c_address,
                              address,
                              I2C_MEMADD_SIZE_8BIT,
                              data,
                              data_size,
                              100U);
-
-            xSemaphoreGive(joint_mutex);
+            xSemaphoreGive(semaphore_manager_get(SEMAPHORE_TYPE_JOINTS));
         }
     }
 
@@ -313,8 +304,6 @@ motor_driver_err_t joint_motor_driver_regulator_get_control(void* user,
 motor_driver_err_t joint_motor_driver_fault_get_current(void* user, float32_t* current)
 {
     ATLAS_ASSERT(user && current);
-
-    joint_manager_t* manager = (joint_manager_t*)user;
 
     *current = 1.0F;
 

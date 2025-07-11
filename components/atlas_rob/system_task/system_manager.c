@@ -46,14 +46,14 @@ static inline bool system_manager_start_retry_timer(system_manager_t* manager)
 {
     ATLAS_ASSERT(manager);
 
-    xTimerStart(manager->retry_timer, pdMS_TO_TICKS(1)) == pdPASS;
+    xTimerStart(timer_manager_get(TIMER_TYPE_SYSTEM), pdMS_TO_TICKS(1)) == pdPASS;
 }
 
 static inline bool system_manager_stop_retry_timer(system_manager_t* manager)
 {
     ATLAS_ASSERT(manager);
 
-    return xTimerStart(manager->retry_timer, pdMS_TO_TICKS(1)) == pdPASS;
+    return xTimerStop(timer_manager_get(TIMER_TYPE_SYSTEM), pdMS_TO_TICKS(1)) == pdPASS;
 }
 
 static atlas_err_t system_manager_notify_joints_ready_handler(system_manager_t* manager)
@@ -226,8 +226,9 @@ static atlas_err_t system_manager_event_handler(system_manager_t* manager,
                     system_manager_event_reference_joints_data_handler(manager,
                                                                        &event->payload.joints_data);
                 }
-                default:
+                default: {
                     return ATLAS_ERR_UNKNOWN_ORIGIN;
+                }
             }
         }
         case SYSTEM_EVENT_TYPE_START_JOINTS: {
@@ -265,7 +266,6 @@ atlas_err_t system_manager_initialize(system_manager_t* manager)
 {
     ATLAS_ASSERT(manager);
 
-    manager->state = ATLAS_STATE_IDLE;
     manager->is_running = true;
     manager->is_joints_ready = false;
 

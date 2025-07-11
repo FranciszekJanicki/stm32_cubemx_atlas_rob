@@ -21,18 +21,6 @@
 
 typedef struct {
     atlas_joint_num_t num;
-    float32_t measure_position;
-    float32_t reference_position;
-    float32_t delta_time;
-    bool is_running;
-
-    a4988_t a4988;
-    ina226_t ina226;
-    as5600_t as5600;
-    step_motor_t motor;
-    pid_regulator_t regulator;
-    motor_driver_t driver;
-
     QueueHandle_t joint_queue;
 
     GPIO_TypeDef* a4988_gpio;
@@ -52,9 +40,30 @@ typedef struct {
 
     GPIO_TypeDef* as5600_gpio;
     uint32_t as5600_dir_pin;
+    uint32_t as5600_pgo_pin;
+} joint_interface_t;
+
+typedef struct {
+    float32_t measure_position;
+    float32_t reference_position;
+    float32_t delta_time;
+    bool is_running;
+
+    a4988_t a4988;
+    ina226_t ina226;
+    as5600_t as5600;
+    step_motor_t motor;
+    pid_regulator_t regulator;
+    motor_driver_t driver;
+
+    joint_interface_t interface;
 } joint_manager_t;
 
-atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_config_t const* config);
+typedef atlas_joint_config_t joint_config_t;
+
+atlas_err_t joint_manager_initialize(joint_manager_t* manager,
+                                     joint_interface_t const* interface,
+                                     joint_config_t const* config);
 atlas_err_t joint_manager_process(joint_manager_t* manager);
 
 #endif // JOINT_TASK_JOINT_MANAGER_H

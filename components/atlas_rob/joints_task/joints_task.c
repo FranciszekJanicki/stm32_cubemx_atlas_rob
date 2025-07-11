@@ -19,111 +19,8 @@
 #define JOINTS_QUEUE_ITEM_SIZE (sizeof(joints_event_t))
 #define JOINTS_QUEUE_STORAGE_SIZE (JOINTS_QUEUE_ITEMS * JOINTS_QUEUE_ITEM_SIZE)
 
-static joint_task_ctx_t joint_task_ctxs[ATLAS_JOINT_NUM] = {
-    [ATLAS_JOINT_NUM_1] = {.manager = {.a4988_pwm_timer = &htim1,
-                                       .a4988_pwm_channel = TIM_CHANNEL_4,
-                                       .a4988_gpio = GPIOA,
-                                       .a4988_dir_pin = GPIO_PIN_10,
-                                       .ina226_i2c_bus = NULL,
-                                       .as5600_i2c_address = 0x00,
-                                       .as5600_gpio = NULL,
-                                       .as5600_dir_pin = 0x00,
-                                       .ina226_i2c_address = 0x00},
-                           .config = {.prop_gain = 10.0F,
-                                      .int_gain = 0.0F,
-                                      .dot_gain = 0.0F,
-                                      .sat_gain = 0.0F,
-                                      .min_position = 0.0F,
-                                      .max_position = 359.0F,
-                                      .min_speed = 10.0F,
-                                      .max_speed = 500.0F}},
-    [ATLAS_JOINT_NUM_2] = {.manager = {.a4988_pwm_timer = NULL,
-                                       .a4988_pwm_channel = 0x00,
-                                       .a4988_gpio = NULL,
-                                       .a4988_dir_pin = 0x00,
-                                       .ina226_i2c_bus = NULL,
-                                       .as5600_i2c_address = 0x00,
-                                       .as5600_gpio = NULL,
-                                       .as5600_dir_pin = 0x00,
-                                       .ina226_i2c_address = 0x00},
-                           .config = {.prop_gain = 0.0F,
-                                      .int_gain = 0.0F,
-                                      .dot_gain = 0.0F,
-                                      .sat_gain = 0.0F,
-                                      .min_position = 0.0F,
-                                      .max_position = 0.0F,
-                                      .min_speed = 0.0F,
-                                      .max_speed = 0.0F}},
-    [ATLAS_JOINT_NUM_3] = {.manager = {.a4988_pwm_timer = NULL,
-                                       .a4988_pwm_channel = 0x00,
-                                       .a4988_gpio = NULL,
-                                       .a4988_dir_pin = 0x00,
-                                       .ina226_i2c_bus = NULL,
-                                       .as5600_i2c_address = 0x00,
-                                       .as5600_gpio = NULL,
-                                       .as5600_dir_pin = 0x00,
-                                       .ina226_i2c_address = 0x00},
-                           .config = {.prop_gain = 0.0F,
-                                      .int_gain = 0.0F,
-                                      .dot_gain = 0.0F,
-                                      .sat_gain = 0.0F,
-                                      .min_position = 0.0F,
-                                      .max_position = 0.0F,
-                                      .min_speed = 0.0F,
-                                      .max_speed = 0.0F}},
-    [ATLAS_JOINT_NUM_4] = {.manager = {.a4988_pwm_timer = NULL,
-                                       .a4988_pwm_channel = 0x00,
-                                       .a4988_gpio = NULL,
-                                       .a4988_dir_pin = 0x00,
-                                       .ina226_i2c_bus = NULL,
-                                       .as5600_i2c_address = 0x00,
-                                       .as5600_gpio = NULL,
-                                       .as5600_dir_pin = 0x00,
-                                       .ina226_i2c_address = 0x00},
-                           .config = {.prop_gain = 0.0F,
-                                      .int_gain = 0.0F,
-                                      .dot_gain = 0.0F,
-                                      .sat_gain = 0.0F,
-                                      .min_position = 0.0F,
-                                      .max_position = 0.0F,
-                                      .min_speed = 0.0F,
-                                      .max_speed = 0.0F}},
-    [ATLAS_JOINT_NUM_5] = {.manager = {.a4988_pwm_timer = NULL,
-                                       .a4988_pwm_channel = 0x00,
-                                       .a4988_gpio = NULL,
-                                       .a4988_dir_pin = 0x00,
-                                       .ina226_i2c_bus = NULL,
-                                       .as5600_i2c_address = 0x00,
-                                       .as5600_gpio = NULL,
-                                       .as5600_dir_pin = 0x00,
-                                       .ina226_i2c_address = 0x00},
-                           .config = {.prop_gain = 0.0F,
-                                      .int_gain = 0.0F,
-                                      .dot_gain = 0.0F,
-                                      .sat_gain = 0.0F,
-                                      .min_position = 0.0F,
-                                      .max_position = 0.0F,
-                                      .min_speed = 0.0F,
-                                      .max_speed = 0.0F}},
-    [ATLAS_JOINT_NUM_6] = {.manager = {.a4988_pwm_timer = NULL,
-                                       .a4988_pwm_channel = 0x00,
-                                       .a4988_gpio = NULL,
-                                       .a4988_dir_pin = 0x00,
-                                       .ina226_i2c_bus = NULL,
-                                       .as5600_i2c_address = 0x00,
-                                       .as5600_gpio = NULL,
-                                       .as5600_dir_pin = 0x00,
-                                       .ina226_i2c_address = 0x00},
-                           .config = {.prop_gain = 0.0F,
-                                      .int_gain = 0.0F,
-                                      .dot_gain = 0.0F,
-                                      .sat_gain = 0.0F,
-                                      .min_position = 0.0F,
-                                      .max_position = 0.0F,
-                                      .min_speed = 0.0F,
-                                      .max_speed = 0.0F}}};
-
-static joints_manager_t joints_manager = {};
+static joint_task_ctx_t joint_task_ctxs[ATLAS_JOINT_NUM];
+static joints_manager_t joints_manager;
 
 static void joints_task_func(void*)
 {
@@ -133,6 +30,32 @@ static void joints_task_func(void*)
         ATLAS_LOG_ON_ERR(JOINTS_TASK_NAME, joints_manager_process(&joints_manager));
         vTaskDelay(pdMS_TO_TICKS(10));
     }
+}
+
+static void joint_ctxs_initailize(void)
+{
+    joint_task_ctxs[ATLAS_JOINT_NUM_1] =
+        (joint_task_ctx_t){.interface = {.a4988_pwm_timer = &htim1,
+                                         .a4988_pwm_channel = TIM_CHANNEL_4,
+                                         .a4988_gpio = GPIOA,
+                                         .a4988_dir_pin = GPIO_PIN_10,
+                                         .tca9548_i2c_bus = &hi2c1,
+                                         .tca9548_i2c_address = TCA9548_DEV_ADDRESS_A2_L_A1_L_A0_L,
+                                         .ina226_i2c_bus = &hi2c1,
+                                         .as5600_i2c_address = 0x00,
+                                         .as5600_gpio = GPIOA,
+                                         .as5600_dir_pin = 0x00,
+                                         .ina226_i2c_address = 0x00},
+                           .config = {.prop_gain = 10.0F,
+                                      .int_gain = 0.0F,
+                                      .dot_gain = 0.0F,
+                                      .sat_gain = 0.0F,
+                                      .min_position = 0.0F,
+                                      .max_position = 359.0F,
+                                      .min_speed = 10.0F,
+                                      .max_speed = 500.0F,
+                                      .step_change = 1.8F,
+                                      .current_limit = 2.0F}};
 }
 
 static void joint_tasks_initialize(void)
@@ -147,8 +70,8 @@ static void joint_tasks_initialize(void)
         QueueHandle_t joint_queue =
             joint_task_create_queue(&joint_queue_buffers[num], &joint_queue_storages[num]);
 
-        joint_task_ctxs[num].manager.joint_queue = joint_queue;
-        joint_task_ctxs[num].manager.num = num;
+        joint_task_ctxs[num].interface.joint_queue = joint_queue;
+        joint_task_ctxs[num].interface.num = num;
 
         TaskHandle_t joint_task = joint_task_create_task(&joint_task_ctxs[num],
                                                          &joint_task_buffers[num],
@@ -184,12 +107,21 @@ static QueueHandle_t joints_task_create_queue(void)
                               &joints_queue_buffer);
 }
 
+static SemaphoreHandle_t joints_task_create_mutex(void)
+{
+    static StaticSemaphore_t joints_mutex_buffer;
+
+    return xSemaphoreCreateMutexStatic(&joints_mutex_buffer);
+}
+
 void joints_task_initialize(void)
 {
+    joint_ctxs_initailize();
+    joint_tasks_initialize();
+
     task_manager_set(TASK_TYPE_JOINTS, joints_task_create_task());
     queue_manager_set(QUEUE_TYPE_JOINTS, joints_task_create_queue());
-
-    joint_tasks_initialize();
+    semaphore_manager_set(SEMAPHORE_TYPE_JOINTS, joints_task_create_mutex());
 }
 
 void joint_pwm_pulse_callback(atlas_joint_num_t num)

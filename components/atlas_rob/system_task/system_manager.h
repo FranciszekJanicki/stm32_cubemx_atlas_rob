@@ -4,7 +4,6 @@
 #include "FreeRTOS.h"
 #include "common.h"
 #include "queue.h"
-#include "spi.h"
 #include "stm32l476xx.h"
 #include "stm32l4xx_hal.h"
 #include "task.h"
@@ -15,10 +14,6 @@ typedef struct {
     bool is_running;
     bool is_joints_ready;
 
-    TimerHandle_t retry_timer;
-
-    atlas_state_t state;
-    atlas_joints_data_t joints_data;
 } system_manager_t;
 
 atlas_err_t system_manager_initialize(system_manager_t* manager);

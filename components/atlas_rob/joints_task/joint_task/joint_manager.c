@@ -49,11 +49,11 @@ motor_driver_err_t joint_motor_driver_fault_get_current(void* user, float32_t* c
 
 static char const* const TAG = "joint_manager";
 
-static inline bool joint_manager_has_joint_event(QueueHandle_t queue)
+static inline bool joint_manager_has_joint_event(joint_manager_t const* manager)
 {
-    ATLAS_ASSERT(queue);
+    ATLAS_ASSERT(manager);
 
-    return uxQueueMessagesWaiting(queue);
+    return uxQueueMessagesWaiting(manager->interface.joint_queue);
 }
 
 static inline bool joint_manager_send_joints_notify(joints_notify_t notify)
@@ -68,11 +68,12 @@ static inline bool joint_manager_send_joints_event(joints_event_t const* event)
     return xQueueSend(queue_manager_get(QUEUE_TYPE_JOINTS), event, pdMS_TO_TICKS(1)) == pdPASS;
 }
 
-static inline bool joint_manager_receive_joint_event(QueueHandle_t queue, joint_event_t* event)
+static inline bool joint_manager_receive_joint_event(joint_manager_t const* manager,
+                                                     joint_event_t* event)
 {
-    ATLAS_ASSERT(queue && event);
+    ATLAS_ASSERT(manager && event);
 
-    return xQueueReceive(queue, event, pdMS_TO_TICKS(1)) == pdPASS;
+    return xQueueReceive(manager->interface.joint_queue, event, pdMS_TO_TICKS(1)) == pdPASS;
 }
 
 static inline bool joint_manager_receive_joint_notify(joint_notify_t* notify)
@@ -95,7 +96,7 @@ static atlas_err_t joint_manager_notify_delta_timer_handler(joint_manager_t* man
 
     joints_event_t event = {.type = JOINTS_EVENT_TYPE_MEASURE_DATA};
     event.payload.measure_data.position = manager->measure_position;
-    event.payload.measure_data.num = manager->num;
+    event.payload.measure_data.num = manager->interface.num;
 
     if (!joint_manager_send_joints_event(&event)) {
         return ATLAS_ERR_FAIL;
@@ -177,7 +178,10 @@ static atlas_err_t joint_manager_event_position_handler(
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    ATLAS_LOG(TAG, "num: %d, reference_position: %d * 100", manager->num, (int32_t)*position * 100);
+    ATLAS_LOG(TAG,
+              "num: %d, reference_position: %d * 100",
+              manager->interface.num,
+              (int32_t)*position * 100);
 
     manager->reference_position = *position;
 
@@ -214,8 +218,8 @@ atlas_err_t joint_manager_process(joint_manager_t* manager)
     }
 
     joint_event_t event;
-    while (joint_manager_has_joint_event(manager->joint_queue)) {
-        if (joint_manager_receive_joint_event(manager->joint_queue, &event)) {
+    while (joint_manager_has_joint_event(manager)) {
+        if (joint_manager_receive_joint_event(manager, &event)) {
             ATLAS_RET_ON_ERR(joint_manager_event_handler(manager, &event));
         }
     }
@@ -223,28 +227,31 @@ atlas_err_t joint_manager_process(joint_manager_t* manager)
     return ATLAS_ERR_OK;
 }
 
-atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_config_t const* config)
+atlas_err_t joint_manager_initialize(joint_manager_t* manager,
+                                     joint_interface_t const* interface,
+                                     joint_config_t const* config)
 {
-    ATLAS_ASSERT(manager && config);
+    ATLAS_ASSERT(manager && interface && config);
 
+    memcpy(&manager->interface, interface, sizeof(*interface));
     manager->is_running = false;
 
     as5600_initialize(&manager->as5600,
-                      &(as5600_config_t){.dir_pin = manager->as5600_dir_pin,
+                      &(as5600_config_t){.dir_pin = interface->as5600_dir_pin,
                                          .max_angle = config->max_position,
                                          .min_angle = config->min_position,
-                                         .pgo_pin = 0x00},
-                      &(as5600_interface_t){.gpio_user = manager,
+                                         .pgo_pin = interface->as5600_pgo_pin},
+                      &(as5600_interface_t){.gpio_user = &manager->interface,
                                             .gpio_write_pin = joint_as5600_gpio_write_pin,
-                                            .bus_user = manager,
+                                            .bus_user = &manager->interface,
                                             .bus_read_data = joint_as5600_bus_read_data,
                                             .bus_write_data = joint_as5600_bus_write_data});
 
     a4988_initialize(&manager->a4988,
-                     &(a4988_config_t){.pin_dir = manager->a4988_dir_pin},
-                     &(a4988_interface_t){.gpio_user = manager,
+                     &(a4988_config_t){.pin_dir = interface->a4988_dir_pin},
+                     &(a4988_interface_t){.gpio_user = &manager->interface,
                                           .gpio_write_pin = joint_a4988_gpio_write_pin,
-                                          .pwm_user = manager,
+                                          .pwm_user = &manager->interface,
                                           .pwm_start = joint_a4988_pwm_start,
                                           .pwm_stop = joint_a4988_pwm_stop,
                                           .pwm_set_frequency = joint_a4988_pwm_set_frequency});
@@ -255,7 +262,7 @@ atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_confi
                                .max_position = config->max_position,
                                .min_speed = config->min_speed,
                                .max_speed = config->max_speed,
-                               .step_change = 1.8F},
+                               .step_change = config->step_change},
         &(step_motor_interface_t){.device_user = manager,
                                   .device_set_frequency = joint_step_motor_device_set_frequency,
                                   .device_set_direction = joint_step_motor_device_set_direction},
@@ -274,7 +281,7 @@ atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_confi
                                                      .max_position = config->max_position,
                                                      .min_speed = config->min_speed,
                                                      .max_speed = config->max_speed,
-                                                     .max_current = 2.0F},
+                                                     .max_current = config->current_limit},
                             &(motor_driver_interface_t){
                                 .motor_user = manager,
                                 .motor_set_speed = joint_motor_driver_motor_set_speed,
@@ -282,10 +289,10 @@ atlas_err_t joint_manager_initialize(joint_manager_t* manager, atlas_joint_confi
                                 .encoder_get_position = joint_motor_driver_encoder_get_position,
                                 .regulator_user = manager,
                                 .regulator_get_control = joint_motor_driver_regulator_get_control,
-                                .fault_user = manager,
+                                .fault_user = NULL,
                                 .fault_get_current = joint_motor_driver_fault_get_current});
 
-    if (!joint_manager_send_joints_notify(1 << manager->num)) {
+    if (!joint_manager_send_joints_notify(1 << manager->interface.num)) {
         return ATLAS_ERR_FAIL;
     }
 

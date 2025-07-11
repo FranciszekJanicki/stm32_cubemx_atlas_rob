@@ -12,11 +12,12 @@ static void joint_task_func(void* parameter)
 {
     joint_task_ctx_t* task_ctx = (joint_task_ctx_t*)parameter;
 
+    joint_manager_t manager;
     ATLAS_LOG_ON_ERR(pcTaskGetName(NULL),
-                     joint_manager_initialize(&task_ctx->manager, &task_ctx->config));
+                     joint_manager_initialize(&manager, &task_ctx->interface, &task_ctx->config));
 
     while (1) {
-        ATLAS_LOG_ON_ERR(pcTaskGetName(NULL), joint_manager_process(&task_ctx->manager));
+        ATLAS_LOG_ON_ERR(pcTaskGetName(NULL), joint_manager_process(&manager));
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
@@ -28,7 +29,7 @@ TaskHandle_t joint_task_create_task(joint_task_ctx_t* task_ctx,
     ATLAS_ASSERT(task_ctx && task_buffer && task_stack);
 
     char task_name[15];
-    snprintf(task_name, sizeof(task_name), "%s_%d", "joint_task", task_ctx->manager.num);
+    snprintf(task_name, sizeof(task_name), "%s_%d", "joint_task", task_ctx->interface.num);
 
     TaskHandle_t joint_task = xTaskCreateStatic(joint_task_func,
                                                 task_name,
