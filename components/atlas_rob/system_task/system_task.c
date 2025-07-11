@@ -19,7 +19,7 @@
 #define SYSTEM_TIMER_PERIOD_MS (10000U)
 #define SYSTEM_TIMER_PERIOD_TICKS (pdMS_TO_TICKS(SYSTEM_TIMER_PERIOD_MS))
 #define SYSTEM_TIMER_ID (NULL)
-#define SYSTEM_TIMER_AUTORELOAD (pdTRUE)
+#define SYSTEM_TIMER_AUTORELOAD (pdFALSE)
 
 static void system_task_func(void*)
 {
@@ -44,7 +44,7 @@ static void system_timer_callback(TimerHandle_t timer)
     portYIELD_FROM_ISR(task_woken);
 }
 
-TaskHandle_t  system_task_create_task(void)
+static TaskHandle_t system_task_create_task(void)
 {
     static StaticTask_t system_task_buffer;
     static StackType_t system_task_stack[SYSTEM_TASK_STACK_DEPTH];
@@ -58,7 +58,7 @@ TaskHandle_t  system_task_create_task(void)
                              &system_task_buffer);
 }
 
-QueueHandle_t  system_task_create_queue(void)
+static QueueHandle_t system_task_create_queue(void)
 {
     static StaticQueue_t system_queue_buffer;
     static uint8_t system_queue_storage[SYSTEM_QUEUE_STORAGE_SIZE];
@@ -69,7 +69,7 @@ QueueHandle_t  system_task_create_queue(void)
                               &system_queue_buffer);
 }
 
-TimerHandle_t  system_task_create_timer(void)
+static TimerHandle_t system_task_create_timer(void)
 {
     static StaticTimer_t system_timer_buffer;
 
@@ -96,3 +96,9 @@ void system_task_initialize(void)
 #undef SYSTEM_QUEUE_ITEMS
 #undef SYSTEM_QUEUE_ITEM_SIZE
 #undef SYSTEM_QUEUE_STORAGE_SIZE
+
+#undef SYSTEM_TIMER_NAME
+#undef SYSTEM_TIMER_PERIOD_MS
+#undef SYSTEM_TIMER_PERIOD_TICKS
+#undef SYSTEM_TIMER_ID
+#undef SYSTEM_TIMER_AUTORELOAD

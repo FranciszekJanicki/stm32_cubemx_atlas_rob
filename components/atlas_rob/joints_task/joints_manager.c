@@ -210,8 +210,6 @@ static atlas_err_t joints_manager_notify_joint_ready_handler(joints_manager_t* m
     ATLAS_LOG(TAG, "joint %d ready", num);
 
     if (joints_manager_all_joints_ready(manager)) {
-        ATLAS_LOG(TAG, "all joints ready");
-
         if (!joints_manager_send_system_notify(SYSTEM_NOTIFY_JOINTS_READY)) {
             return ATLAS_ERR_FAIL;
         }

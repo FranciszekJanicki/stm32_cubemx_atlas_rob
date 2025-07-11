@@ -37,7 +37,6 @@ typedef enum {
 
 typedef enum {
     TIMER_TYPE_SYSTEM,
-    TIMER_TYPE_JOINTS,
     TIMER_TYPE_NUM,
 } TimerType_t;
 

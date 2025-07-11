@@ -26,7 +26,7 @@ static void packet_task_func(void*)
     }
 }
 
-TaskHandle_t packet_task_create_task(void)
+static TaskHandle_t packet_task_create_task(void)
 {
     static StaticTask_t packet_task_buffer;
     static StackType_t packet_task_stack[PACKET_TASK_STACK_DEPTH];
@@ -40,7 +40,7 @@ TaskHandle_t packet_task_create_task(void)
                              &packet_task_buffer);
 }
 
-QueueHandle_t packet_task_create_queue(void)
+static QueueHandle_t packet_task_create_queue(void)
 {
     static StaticQueue_t packet_queue_buffer;
     static uint8_t packet_queue_storage[PACKET_QUEUE_STORAGE_SIZE];

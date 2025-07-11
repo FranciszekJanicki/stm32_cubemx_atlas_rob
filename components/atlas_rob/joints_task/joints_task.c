@@ -135,12 +135,6 @@ static void joints_task_func(void*)
     }
 }
 
-static void joint_queues_initialize(void)
-{
-    for (uint8_t num = 0U; num < ATLAS_JOINT_NUM; ++num) {
-    }
-}
-
 static void joint_tasks_initialize(void)
 {
     static uint8_t joint_queue_storages[ATLAS_JOINT_NUM][JOINT_QUEUE_STORAGE_SIZE];
@@ -165,7 +159,7 @@ static void joint_tasks_initialize(void)
     }
 }
 
-TaskHandle_t joints_task_create_task(void)
+static TaskHandle_t joints_task_create_task(void)
 {
     static StaticTask_t joints_task_buffer;
     static StackType_t joints_task_stack[JOINTS_TASK_STACK_DEPTH];
@@ -179,7 +173,7 @@ TaskHandle_t joints_task_create_task(void)
                              &joints_task_buffer);
 }
 
-QueueHandle_t joints_task_create_queue(void)
+static QueueHandle_t joints_task_create_queue(void)
 {
     static StaticQueue_t joints_queue_buffer;
     static uint8_t joints_queue_storage[JOINTS_QUEUE_STORAGE_SIZE];
