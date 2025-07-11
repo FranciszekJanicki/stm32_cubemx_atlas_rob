@@ -57,6 +57,22 @@ static inline bool packet_manager_receive_rob_packet(packet_manager_t* manager,
     // HAL_SPI_Receive(manager->spi, (uint8_t*)packet, sizeof(*packet), 100) == HAL_OK;
 }
 
+static inline void packet_manager_set_hmi_packet_ready_pin(packet_manager_t* manager, bool state)
+{
+    ATLAS_ASSERT(manager);
+
+    HAL_GPIO_WritePin(manager->hmi_packet_ready_gpio,
+                      manager->hmi_packet_ready_pin,
+                      (GPIO_PinState)state);
+}
+
+static inline bool packet_manager_get_rob_packet_ready_pin(packet_manager_t* manager)
+{
+    ATLAS_ASSERT(manager);
+
+    return (bool)HAL_GPIO_ReadPin(manager->rob_packet_ready_gpio, manager->rob_packet_ready_pin);
+}
+
 static atlas_err_t packet_manager_packet_joints_data_handler(
     packet_manager_t* manager,
     atlas_rob_packet_payload_joints_data_t const* joints_data)
@@ -155,9 +171,11 @@ static atlas_err_t packet_manager_notify_rob_packet_ready_handler(packet_manager
         return ATLAS_ERR_NOT_RUNNING;
     }
 
-    atlas_rob_packet_t packet;
-    if (packet_manager_receive_rob_packet(manager, &packet)) {
-        ATLAS_RET_ON_ERR(packet_manager_rob_packet_handler(manager, &packet));
+    if (packet_manager_get_rob_packet_ready_pin(manager)) {
+        atlas_rob_packet_t packet;
+        if (packet_manager_receive_rob_packet(manager, &packet)) {
+            ATLAS_RET_ON_ERR(packet_manager_rob_packet_handler(manager, &packet));
+        }
     }
 
     return ATLAS_ERR_OK;
@@ -184,6 +202,8 @@ static atlas_err_t packet_manager_event_start_handler(packet_manager_t* manager,
         return ATLAS_ERR_ALREADY_RUNNING;
     }
 
+    packet_manager_set_hmi_packet_ready_pin(manager, true);
+
     manager->is_running = true;
 
     return ATLAS_ERR_OK;
@@ -198,6 +218,8 @@ static atlas_err_t packet_manager_event_stop_handler(packet_manager_t* manager,
     if (!manager->is_running) {
         return ATLAS_ERR_NOT_RUNNING;
     }
+
+    packet_manager_set_hmi_packet_ready_pin(manager, true);
 
     manager->is_running = false;
 
@@ -219,6 +241,10 @@ static atlas_err_t packet_manager_event_joints_data_handler(
     packet.payload.joints_data = *joints_data;
 
     ATLAS_RET_ON_ERR(packet_manager_send_hmi_packet(manager, &packet));
+
+    packet_manager_set_hmi_packet_ready_pin(manager, false);
+    vTaskDelay(pdMS_TO_TICKS(10));
+    packet_manager_set_hmi_packet_ready_pin(manager, true);
 
     return ATLAS_ERR_OK;
 }
@@ -264,6 +290,8 @@ atlas_err_t packet_manager_initialize(packet_manager_t* manager)
     ATLAS_ASSERT(manager);
 
     manager->is_running = false;
+
+    packet_manager_set_hmi_packet_ready_pin(manager, true);
 
     if (!packet_manager_send_system_notify(SYSTEM_NOTIFY_PACKET_READY)) {
         return ATLAS_ERR_FAIL;

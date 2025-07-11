@@ -13,6 +13,7 @@ typedef enum {
     TASK_TYPE_SYSTEM,
     TASK_TYPE_JOINTS,
     TASK_TYPE_PACKET,
+    TASK_TYPE_SAFETY,
     TASK_TYPE_UART,
     TASK_TYPE_NUM,
 } TaskType_t;
@@ -21,6 +22,7 @@ typedef enum {
     QUEUE_TYPE_SYSTEM,
     QUEUE_TYPE_JOINTS,
     QUEUE_TYPE_PACKET,
+    QUEUE_TYPE_SAFETY,
     QUEUE_TYPE_NUM,
 } QueueType_t;
 

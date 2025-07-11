@@ -315,15 +315,3 @@ atlas_err_t joints_manager_initialize(joints_manager_t* manager)
 
     return ATLAS_ERR_OK;
 }
-
-void joints_delta_timer_callback(void)
-{
-    BaseType_t task_woken = pdFALSE;
-
-    xTaskNotifyFromISR(task_manager_get(TASK_TYPE_JOINTS),
-                       JOINTS_NOTIFY_DELTA_TIMER,
-                       eSetBits,
-                       &task_woken);
-
-    portYIELD_FROM_ISR(task_woken);
-}

@@ -13,7 +13,13 @@
 typedef struct {
     bool is_running;
 
-    SPI_HandleTypeDef* spi;
+    GPIO_TypeDef* hmi_packet_ready_gpio;
+    uint16_t hmi_packet_ready_pin;
+
+    GPIO_TypeDef* rob_packet_ready_gpio;
+    uint16_t rob_packet_ready_pin;
+
+    SPI_HandleTypeDef* packet_spi;
 } packet_manager_t;
 
 atlas_err_t packet_manager_initialize(packet_manager_t* manager);

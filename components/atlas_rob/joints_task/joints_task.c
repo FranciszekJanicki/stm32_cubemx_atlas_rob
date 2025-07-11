@@ -136,6 +136,18 @@ void joint_pwm_pulse_callback(atlas_joint_num_t num)
     portYIELD_FROM_ISR(task_woken);
 }
 
+void joints_delta_timer_callback(void)
+{
+    BaseType_t task_woken = pdFALSE;
+
+    xTaskNotifyFromISR(task_manager_get(TASK_TYPE_JOINTS),
+                       JOINTS_NOTIFY_DELTA_TIMER,
+                       eSetBits,
+                       &task_woken);
+
+    portYIELD_FROM_ISR(task_woken);
+}
+
 #undef JOINTS_TASK_STACK_DEPTH
 #undef JOINTS_TASK_PRIORITY
 #undef JOINTS_TASK_NAME
